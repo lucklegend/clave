@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+# Rewritten by `next dev` and `next build` with different paths on every run.
+next-env.d.ts
+.DS_Store
+.agent-work/

@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Token blocks — transcribed from the reference artifact.
+
+   Three blocks, deliberately not collapsed into Tailwind's `dark:` variant:
+   the system preference decides by default, and a `data-theme` attribute on
+   <html> overrides it in either direction. Nothing ships that sets the
+   attribute; it is the hook a future toggle writes to.
+   --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  --paper: #edf0ec;
+  --surface: #f7f9f5;
+  --surface-2: #fcfdfb;
+  --ink: #17253f;
+  --ink-2: #3d4a61;
+  /* Artifact ships #6C7686 (3.98:1 on --paper). Every use is 10-11.5px text,
+     which WCAG 1.4.3 holds to 4.5:1. Darkened one step to 4.73:1. */
+  --muted: #616b7b;
+  --rule: #cbd1cb;
+  --rule-strong: #a8b1ab;
+  /* Artifact ships #55811A (4.06:1). Used at 10.5-15px for the module code,
+     step number, spec value and footer mark. Darkened one step to 4.83:1. */
+  --accent: #4c7415;
+  --accent-ink: #41660f;
+  --accent-soft: rgba(141, 198, 63, 0.16);
+  --brand-green: #8dc63f;
+  --on-green: #17253f;
+  --ok: #2e6b4e;
+  --warn: #8a6100;
+  --crit: #a3301f;
+  --shadow: 0 1px 0 rgba(23, 37, 63, 0.06);
+  --f-display: var(--font-bricolage-grotesque), "Helvetica Neue", Arial, sans-serif;
+  --f-body: var(--font-instrument-sans), "Helvetica Neue", Arial, sans-serif;
+  --f-mono: var(--font-sometype-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1626;
+    --surface: #151e31;
+    --surface-2: #1b263c;
+    --ink: #e6eaf0;
+    --ink-2: #b4bdcc;
+    --muted: #7e8798;
+    --rule: #26314a;
+    --rule-strong: #3b4864;
+    --accent: #9bd34a;
+    --accent-ink: #b2e068;
+    --accent-soft: rgba(155, 211, 74, 0.14);
+    --brand-green: #8dc63f;
+    --on-green: #0f1626;
+    --ok: #5ba97f;
+    --warn: #d6a63f;
+    --crit: #e0705c;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #0f1626;
+  --surface: #151e31;
+  --surface-2: #1b263c;
+  --ink: #e6eaf0;
+  --ink-2: #b4bdcc;
+  --muted: #7e8798;
+  --rule: #26314a;
+  --rule-strong: #3b4864;
+  --accent: #9bd34a;
+  --accent-ink: #b2e068;
+  --accent-soft: rgba(155, 211, 74, 0.14);
+  --brand-green: #8dc63f;
+  --on-green: #0f1626;
+  --ok: #5ba97f;
+  --warn: #d6a63f;
+  --crit: #e0705c;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ---------------------------------------------------------------------------
+   Tailwind theme map.
+
+   `inline` is load-bearing: it makes `bg-paper` emit `background-color:
+   var(--paper)` rather than baking today's literal into the utility, so the
+   media query and the `data-theme` override above still reach it. One class
+   name, three themes, no `dark:` prefix anywhere on the page.
+
+   `--ok` and `--crit` have no consumer in the current markup; they are
+   registered so the token set stays whole for the next surface.
+   `--shadow` stays a raw custom property, used as `shadow-[var(--shadow)]`.
+   --------------------------------------------------------------------------- */
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-brand-green: var(--brand-green);
+  --color-on-green: var(--on-green);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-crit: var(--crit);
+
+  --font-display: var(--f-display);
+  --font-body: var(--f-body);
+  --font-mono: var(--f-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Base elements. Preflight already handles `box-sizing`, the margin reset and
+   `a { color: inherit }`, so only what it does not cover is restated here.
+
+   `@layer base` is load-bearing. `@import "tailwindcss"` puts every utility in
+   `@layer utilities`, and an unlayered declaration beats any layered one
+   whatever its specificity — so unlayered, the `h1, h2, h3` rule below would
+   win over `font-extrabold` and `tracking-[-0.035em]` on the hero <h1> and
+   over every heading utility in the register sections. Inside `base` it does
+   what it is meant to: set the defaults a utility then overrides.
+
+   Nothing above this block is layered: the token blocks, the `@theme inline`
+   map, the mark swap and the reduced-motion blanket have no competing utility.
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  body {
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Logo mark. Two PNGs, one visible at a time, swapped in CSS so the choice is
+   correct during SSR — no flash, no hydration mismatch. A <picture> with a
+   `prefers-color-scheme` media condition cannot see `data-theme`, so it does
+   not work here. Both <Image>s are eager (S6): a `display:none` image is
+   outside the layout tree and may never trip a lazy load.
+   --------------------------------------------------------------------------- */
+
+.mark {
+  display: block;
+  width: min(420px, 80%);
+  height: auto;
+}
+
+.mark-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .mark-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .mark-dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mark-light {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .mark-dark {
+    display: block;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The page's entire motion budget is the CTA's 1px hover lift. This blanket
+   kills the transition; the end-state lift itself is suppressed at the call
+   site, where each CTA pairs `hover:-translate-y-px` with
+   `motion-reduce:hover:translate-y-0`. The artifact's companion
+   `.btn:hover{transform:none}` is deliberately not ported — nothing here
+   carries a `.btn` class, and Tailwind emits `translate`, not `transform`, so
+   it would match nothing and read as a mechanism that is not one.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
