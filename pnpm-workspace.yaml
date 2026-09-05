@@ -1,0 +1,7 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+# unrs-resolver ships prebuilt binaries as optional deps; its postinstall build is not
+# needed. `create-next-app` declines it too. pnpm blocks the install until this is answered.
+allowBuilds:
+  unrs-resolver: false
