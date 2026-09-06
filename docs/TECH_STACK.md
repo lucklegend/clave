@@ -31,7 +31,12 @@ Since your mobile app is React Native, using **React (via Next.js)** for the web
 **Backend: Supabase, not a hand-rolled Node/Express API + separate database.**
 This is the biggest lever for a small team's speed:
 
-- **Auth** with phone-number OTP out of the box — important because PH users are phone-first (many don't check email regularly), and phone numbers double as their GCash-linked identity.
+- **Auth**. As built (0003), the **web portal** signs in with email-or-username + password and
+  with Google OAuth. **Phone-number OTP remains the plan for the mobile app** — PH users are
+  phone-first, many don't check email regularly, and phone numbers double as their GCash-linked
+  identity. All three land on the same `auth.users` row, and the schema keeps the phone path
+  open: `public.users.email` is nullable, `phone` is carried, and the `users_contactable` CHECK
+  requires one or the other.
 - **Storage** buckets for payment receipt screenshots and PDF attachments, with access rules tied to the same auth system.
 - **Row-Level Security (RLS)** in Postgres — this is what makes your app properly multi-tenant. Every table has a `village_id`; a policy ensures a resident of Village A can never see Village B's data, enforced at the database level, not just in app code (much safer).
 - **Realtime** subscriptions — announcements and booking updates can push to residents' screens live, without you building a WebSocket server.
@@ -59,8 +64,16 @@ heartbeat-clavehq/
 
 ## Data model sketch (starting point)
 
-- `villages` (tenant root: name, plan/tier, free-tier user cap)
-- `profiles` (linked to Supabase auth user: role = owner/tenant/maintenance/guard/admin, village_id)
+- `villages` (tenant root: name, slug, tier) — **built**
+- `users` (linked 1:1 to the Supabase `auth.users` row: village_id, email, username, full_name,
+  phone, avatar_url, status) — **built**. Named `users`, not `profiles`, so it reads with the
+  grant tables below.
+- `roles`, `permissions`, `role_permissions`, `user_roles`, `user_permissions` — **built**.
+  Roles are named bundles of capabilities; `user_permissions` carries per-user `allow`/`deny`
+  overrides, and a `deny` beats everything. `village_id` on a grant is the _scope_ of that
+  grant, which is not the same as the person's home village on `users` — one person can be an
+  owner in village A and an officer in village B. Resolution lives in
+  `public.user_has_permission(permission, village, user)`.
 - `units` (house/lot/unit number, village_id, owner_id)
 - `payments` (unit_id, type: electricity/water/repair/dues, amount, method, receipt_url, status: pending/verified/rejected)
 - `announcements` (village_id, author_id, body, attachment_url)
