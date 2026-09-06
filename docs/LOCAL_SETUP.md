@@ -2,33 +2,49 @@
 
 ## Required installs
 
-| Tool                              | Purpose                                | Notes                                                                                                                    |
-| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Node.js LTS (v20.x)**           | JS runtime                             | Use `nvm` to manage versions                                                                                             |
-| **pnpm**                          | Package manager (monorepo workspaces)  | `npm install -g pnpm`                                                                                                    |
-| **Git**                           | Version control                        | —                                                                                                                        |
-| **Docker Desktop**                | Runs Supabase locally                  | Supabase's local stack (Postgres, Auth, Storage) runs in containers                                                      |
-| **Supabase CLI**                  | Spin up local Supabase, run migrations | `npm install -g supabase`                                                                                                |
-| **Expo CLI / EAS CLI**            | Run and build the mobile app           | `npm install -g eas-cli`; Expo CLI runs via `npx expo` per-project                                                       |
-| **Android Studio**                | Android emulator + SDK                 | Needed to test the mobile app on Android without a physical device                                                       |
-| **Xcode** (Mac only)              | iOS Simulator                          | Only needed if you're on a Mac and want to test iOS locally; otherwise EAS Build + a real device (Expo Go app) covers it |
-| **VS Code** (or editor of choice) | Development                            | Recommended extensions: ESLint, Prettier, Tailwind CSS IntelliSense                                                      |
+| Tool                              | Purpose                                | Notes                                                                                                                     |
+| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js LTS (v20.x)**           | JS runtime                             | Use `nvm` to manage versions                                                                                              |
+| **pnpm**                          | Package manager (monorepo workspaces)  | `npm install -g pnpm`                                                                                                     |
+| **Git**                           | Version control                        | —                                                                                                                         |
+| **Docker Desktop**                | Runs Supabase locally                  | Supabase's local stack (Postgres, Auth, Storage) runs in containers                                                       |
+| **Supabase CLI**                  | Spin up local Supabase, run migrations | Installed as a repo dev dependency — `pnpm install` brings it. Invoke as `pnpm supabase <cmd>`; no global install needed. |
+| **Expo CLI / EAS CLI**            | Run and build the mobile app           | `npm install -g eas-cli`; Expo CLI runs via `npx expo` per-project                                                        |
+| **Android Studio**                | Android emulator + SDK                 | Needed to test the mobile app on Android without a physical device                                                        |
+| **Xcode** (Mac only)              | iOS Simulator                          | Only needed if you're on a Mac and want to test iOS locally; otherwise EAS Build + a real device (Expo Go app) covers it  |
+| **VS Code** (or editor of choice) | Development                            | Recommended extensions: ESLint, Prettier, Tailwind CSS IntelliSense                                                       |
 
 ## Current state
 
-Only the web app is scaffolded so far — the landing page at `/` in `apps/web`.
-Of the sequence below, only **step 1** and **step 5** run today. Steps 2-4
-(`supabase start`, `supabase db reset`, `.env.local`) need the Supabase project
-this repo doesn't have yet, and step 6 needs `apps/mobile`, which hasn't been
-created. Both wait on their respective milestones; the rest of this doc is the
-plan of record for when they land.
+Steps 1-5 below all run today. Only **step 6** does not — `apps/mobile` has not
+been created yet.
+
+Two things need your own credentials and are not in the repo:
+
+- **`apps/web/.env.local`** — copy from `apps/web/.env.example`, fill in from
+  `pnpm supabase status`.
+- **`.env` at the repo root** — copy from `.env.example`. Holds the Google OAuth
+  client ID and secret, read by the Supabase CLI (not by the web app). Until they
+  are set, everything works except the "Continue with Google" button. The
+  authorized redirect URI to register in Google Cloud Console is
+  `http://127.0.0.1:54321/auth/v1/callback` — Supabase's port, **not** Next's 3000.
 
 ## First-time setup sequence
 
 1. Clone the repo, run `pnpm install` at the root.
-2. `supabase start` — spins up local Postgres/Auth/Storage in Docker (needs Docker Desktop running).
-3. `supabase db reset` (or `supabase migration up`) — applies the SQL migrations in `supabase/migrations/`.
-4. Copy `.env.example` → `.env.local` in both `apps/web` and `apps/mobile`, fill in the local Supabase URL/anon key printed by `supabase start`.
+2. `pnpm supabase start` — spins up local Postgres/Auth/Storage in Docker (needs Docker Desktop running).
+3. `pnpm supabase db reset` — applies the migrations in `supabase/migrations/`, then `supabase/seed.sql`.
+4. Copy `apps/web/.env.example` → `apps/web/.env.local` and fill in the URL, anon key and service-role key printed by `pnpm supabase status`. Copy `.env.example` → `.env` at the root for the Google OAuth values.
+   - `supabase/seed.sql` creates a development account, so there is nothing to set up before you can sign in:
+
+     |          |                          |
+     | -------- | ------------------------ |
+     | Username | `alpha_admin`            |
+     | Email    | `admin@villa-alpha.test` |
+     | Password | `clavehq-test-1`         |
+     | Role     | HOA Admin of Villa Alpha |
+
+     The sign-in form takes the username or the email. The password is in version control on purpose — this account exists only in a local stack, and `db reset` recreates it every time.
 5. Web: `pnpm --filter web dev` → runs Next.js on `http://localhost:3000`.
 6. Mobile: `pnpm --filter mobile start` → opens Expo dev tools; scan the QR code with the **Expo Go** app on your phone, or press `a`/`i` for an emulator/simulator.
 
@@ -36,7 +52,9 @@ plan of record for when they land.
 
 - `3000` — Next.js web app
 - `54321` (default) — Supabase local API
+- `54322` — Postgres itself (`postgresql://postgres:postgres@127.0.0.1:54322/postgres`)
 - `54323` — Supabase Studio (local DB admin UI in the browser)
+- `54324` — Mailpit, which catches every email the local Auth server sends
 - Expo's Metro bundler picks its own port (usually `8081`)
 
 ## Minimum machine specs

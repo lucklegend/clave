@@ -56,5 +56,7 @@ docs/               Planning and process docs (proposal, tech stack, code
 ```
 
 Not built yet, though referenced elsewhere in the docs: `apps/mobile`,
-`packages/shared`, and `supabase/`. There is no auth, no database, and no route
-other than `/`.
+and `supabase/`. Authentication works end to end: `/sign-in` takes an email or a
+username plus a password, or Google OAuth, and lands on a `/dashboard` stub. The
+database is local Supabase — `pnpm supabase start` — with `village_id`-scoped
+Row-Level Security on every table.

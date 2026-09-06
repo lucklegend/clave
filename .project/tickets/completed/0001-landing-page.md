@@ -110,3 +110,52 @@ The open questions above are settled by the user's second request:
 
 - **Answer 4 confirmed by the user:** "yes, responsive web is correct". The page is
   built for a phone browser down to 320px. `apps/mobile` stays out of scope.
+
+---
+
+## Delivered — merged 2026-09-05 (PR #1)
+
+Landed on `main` as `77a3b39 feat: landing page`, merged by `5412d77`.
+
+**What changed.** The partial monorepo scaffold — `apps/web` (Next.js 16.3.4,
+Tailwind 4.3.3, TypeScript), `packages/config`, Turborepo + pnpm workspaces — and
+the claveHQ landing page at `/`, composed in `apps/web/src/app/page.tsx` from nine
+components under `apps/web/src/features/landing/components/`: `Masthead`, `Hero`
+(+ `HeroMark`), `StatementSection`, `ModuleRegister`, `BillingRun`,
+`AmenitiesSection`, `Specs`, `Closing`, `SiteFooter`, over the shared `Label`,
+`SectionHeading`, `RuleList`, `StatementCard` and `RegisterSection` primitives.
+Theme tokens live in `apps/web/src/app/globals.css`.
+
+**Decisions the diff does not explain.**
+
+1. The scaffold is deliberately partial — `apps/web` and `packages/config` only.
+   No `apps/mobile`, no `packages/shared`, no `supabase/`. This overrode build-order
+   step 1 in `docs/HANDOFF.md`.
+2. "Viewable in the mobile" was read as responsive web down to 320px, not an Expo
+   screen. The user confirmed this at the gate.
+3. Theme tokens are CSS custom properties mapped through Tailwind `@theme inline`,
+   so utilities resolve via `var()` at runtime. Without `inline`, dark mode dies
+   silently. Both a `prefers-color-scheme` block and a `data-theme` override are
+   defined; nothing sets `data-theme` yet, so the system preference decides.
+4. Only the base element block in `globals.css` sits in `@layer base`. Unlayered
+   declarations outrank layered ones, so an unlayered base block beat every Tailwind
+   utility and silently broke every heading. The token blocks, `@theme inline`, the
+   mark swap and the reduced-motion blanket stay unlayered deliberately.
+5. Tailwind's `sr-only` is `position:absolute`, so the two scroll containers carry
+   `relative` to clip it. `overflow-x:hidden` on `body` is prohibited as a fix.
+6. The logo ships as two real PNGs in `public/`, swapped by CSS not JS, both eager.
+7. The module register heading reads "Seven modules" where the artifact said "Six"
+   over the same seven rows. Raised with the user twice, never answered.
+8. `--muted` and `--accent` are one shade darker than the artifact, and interactive
+   borders moved off `--rule-strong`; all three failed WCAG AA at the sizes used.
+   Full list with revert costs in `.agent-work/0001-landing-page/design.md` §10.
+9. `metadataBase` points at `https://clavehq.com`, which is not registered. Inert
+   placeholder.
+
+**Gate and review status — recorded, not laundered.** This ticket merged **without
+the stage-6 merge gate**. No `test.md` exists in `.agent-work/0001-landing-page/`;
+`delivery-tester` ran in works-check mode only (`works.md`, verdict WORKS) and no
+tests were ever authored. Neither code review nor security review ran, so the merged
+page is **unreviewed**. The planner found no security-sensitive step — a static page
+with no auth, no data, no user input and no env vars — which is why the mid-loop
+security review did not fire.
