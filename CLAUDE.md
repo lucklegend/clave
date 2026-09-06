@@ -8,10 +8,11 @@ Subscription SaaS for Philippine HOA / subdivision / condo management — paymen
 monitoring, announcements, amenity booking, incident reporting. A web app for
 admins and officers doing heavy data entry, a mobile app for residents' daily use.
 
-**Only the landing page is built.** `apps/web` and `packages/config` exist and
-build; the claveHQ landing page serves at `/`. `apps/mobile`, `packages/shared`
-and `supabase/` are still plans — nothing below describing them is on disk. The
-next milestone is Supabase; see `docs/HANDOFF.md`.
+**Only the landing page and a `/sign-in` placeholder are built.** `apps/web`
+and `packages/config` exist and build; the claveHQ landing page serves at `/`.
+`apps/mobile`, `packages/shared` and `supabase/` are still plans — nothing
+below describing them is on disk. The next milestone is Supabase; see
+`docs/HANDOFF.md`.
 
 ## Reach for the docs
 

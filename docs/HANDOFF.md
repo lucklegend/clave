@@ -23,6 +23,8 @@
 - Phase: **Monorepo scaffolded, landing page shipped.** `apps/web` (Next.js) and
   `packages/config` exist and build; the claveHQ landing page serves at `/`.
   `apps/mobile`, `packages/shared` and `supabase/` are not built.
+- The landing page's masthead now also links to a `/sign-in` stub route — prose
+  only, no form, no auth mechanism of any kind.
 - Next milestone: stand up Supabase (project, schema, RLS) per the build order
   below.
 
@@ -44,6 +46,7 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
 
 - **2026-09-05** — Initial planning session. Produced project proposal, tech stack decision, code standards, and local setup docs (this handoff included). No code yet.
 - **2026-09-05** — Scaffolded the Turborepo/pnpm workspace (`apps/web`, `packages/config` only — mobile, shared and Supabase deliberately deferred) and shipped the claveHQ landing page as `/` in `apps/web`. Next: Supabase project and schema.
+- **2026-09-06** — Added a masthead nav to the landing page's five sections, a light/dark theme toggle that follows the OS preference until first press and is applied before first paint via localStorage, and a `/sign-in` stub route with no auth logic. Next: Supabase project and schema, unchanged.
 
 ---
 

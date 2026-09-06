@@ -56,5 +56,5 @@ docs/               Planning and process docs (proposal, tech stack, code
 ```
 
 Not built yet, though referenced elsewhere in the docs: `apps/mobile`,
-`packages/shared`, and `supabase/`. There is no auth, no database, and no route
-other than `/`.
+`packages/shared`, and `supabase/`. There is no auth and no database; the only
+routes are `/` and a `/sign-in` stub that holds no auth logic of its own.
