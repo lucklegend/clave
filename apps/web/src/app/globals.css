@@ -171,7 +171,11 @@
 
 .mark {
   display: block;
-  width: min(420px, 80%);
+  /* The fallback is the landing hero's size, so the hero passes nothing and renders exactly as
+     it did. `/sign-in` sets `--mark-width` on the wrapper to shrink the same artwork; a caller
+     overriding `width` with a utility would have to out-specify this rule, which is how a
+     shared mark ends up with two competing widths. */
+  width: var(--mark-width, min(420px, 80%));
   height: auto;
 }
 

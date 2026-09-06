@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 // the banner above it, the footer the contentinfo below it, and everything between — hero,
 // the five register sections, the closing block — is the main content.
 //
-// Every component below is zero-prop. Hero mounts HeroMark, SiteFooter renders its own
+// Every component below is zero-prop. Hero mounts BrandMark, SiteFooter renders its own
 // <footer>, and each register section owns its `id` so the four in-page CTAs resolve.
 export default function LandingPage() {
   return (

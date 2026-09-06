@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { compactGhostCta } from "@/features/brand/cta";
 import { ThemeToggle } from "@/features/theme/components/ThemeToggle";
 
 // The nav gets its own class string rather than going through <Label>, for the reason the removed
@@ -8,18 +9,6 @@ import { ThemeToggle } from "@/features/theme/components/ThemeToggle";
 const navLinkClasses =
   "inline-flex min-h-[44px] items-center px-[7px] font-mono text-[12.5px] tracking-[.1em] " +
   "uppercase text-muted hover:text-ink";
-
-// The ghost CTA of `Hero.tsx:14` at 11px, minus its hover lift: the masthead must not compete with
-// the hero's primary CTA one screen below, and the page's whole motion budget is that one lift.
-// With no transform end-state left over, the reduced-motion blanket in `globals.css` removes the
-// colour transition outright and no `motion-reduce:` companion is wanted. The border is `--muted`,
-// never `--rule-strong` — 2.08:1 light / 1.82:1 dark against this `--surface` band, a WCAG 1.4.11
-// failure for the boundary of a UI component. The pills got away with it only because a pill is
-// inert; everything replacing them is interactive.
-const signInClasses =
-  "inline-flex min-h-[44px] items-center rounded-[2px] border border-muted bg-transparent px-3 " +
-  "font-mono text-[11px] tracking-[.06em] uppercase text-ink transition-colors duration-[120ms] " +
-  "ease-[ease] hover:border-accent hover:text-accent";
 
 // Section order, which is also DOM order, visual order and tab order. Every id is set by
 // `RegisterSection`, and each target carries `tabIndex={-1}` so focus follows the jump.
@@ -82,7 +71,7 @@ export function Masthead() {
             it. At ≥860 the nav's `flex-1` has already taken the free space, so it is a no-op. */}
         <div className="ml-auto flex flex-wrap items-center gap-x-[10px] gap-y-2">
           <ThemeToggle />
-          <Link className={signInClasses} href="/sign-in">
+          <Link className={compactGhostCta} href="/sign-in">
             Sign in
           </Link>
         </div>

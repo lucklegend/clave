@@ -1,0 +1,24 @@
+{
+  "name": "@clavehq/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/auth": "./src/schemas/auth.ts",
+    "./types/database": "./src/types/database.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@clavehq/config": "workspace:*",
+    "@types/node": "^20.19.43",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3"
+  }
+}

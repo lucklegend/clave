@@ -1,18 +1,6 @@
-import { HeroMark } from "./HeroMark";
+import { BrandMark } from "@/features/brand/components/BrandMark";
+import { heroGhostCta, heroSolidCta } from "@/features/brand/cta";
 import { Label } from "./Label";
-
-// The whole motion budget for the page: a 1px lift on hover.
-//
-// The reduced-motion blanket in `globals.css` only kills `transition` and `animation`, so the
-// end-state lift is suppressed here instead with `motion-reduce:hover:translate-y-0`. The
-// artifact's `.btn:hover{transform:none}` companion is not ported: these CTAs are utilities with
-// no `.btn` class, and Tailwind emits the `translate` property rather than `transform`.
-const ctaClasses =
-  "inline-block rounded-[2px] border px-4 py-2.5 font-mono text-[12px] tracking-[.06em] uppercase transition duration-[120ms] ease-[ease] hover:-translate-y-px motion-reduce:hover:translate-y-0";
-// `--rule-strong` is 2.17:1 and fails WCAG 1.4.11 for the boundary of a UI component, so the
-// ghost CTA's border is `--muted`. Structural hairlines elsewhere keep `--rule-strong`.
-const ghostCtaClasses = `${ctaClasses} border-muted bg-transparent text-ink hover:border-accent hover:text-accent`;
-const solidCtaClasses = `${ctaClasses} border-ink bg-ink text-paper`;
 
 // Concept figures, kept as the artifact has them. No cross-section reuse, so they stay here.
 const kpis = [
@@ -47,10 +35,10 @@ export function Hero() {
             charged has a reading behind it and a person&apos;s name against it.
           </p>
           <div className="mt-[26px] flex flex-wrap gap-2.5">
-            <a className={solidCtaClasses} href="#modules">
+            <a className={heroSolidCta} href="#modules">
               See what it runs
             </a>
-            <a className={ghostCtaClasses} href="#billing">
+            <a className={heroGhostCta} href="#billing">
               See the billing run
             </a>
           </div>
@@ -70,7 +58,9 @@ export function Hero() {
           </div>
         </div>
 
-        <HeroMark />
+        {/* The one mark on the page that carries an accessible name: it is the only
+            branding in this column. `/sign-in` renders the same component unlabelled. */}
+        <BrandMark label="claveHQ — the heartbeat of your community" />
       </div>
     </div>
   );
