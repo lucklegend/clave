@@ -1,7 +1,10 @@
 import type { PermissionSet, Village } from "@/features/authz/types";
+import { MenuIcon } from "../icons";
 import { NAV_DESTINATIONS, type Destination } from "../nav/destinations";
 import { groupBySection, visibleDestinations } from "../nav/select";
 import { DestinationLink } from "./DestinationLink";
+import { DrawerFrame } from "./DrawerFrame";
+import { SidebarToggle } from "./SidebarToggle";
 import { VillagePill } from "./VillagePill";
 
 // The canvas's measurements, kept in one place because every row shares them: 56px tall, a 24px
@@ -41,6 +44,10 @@ type NavigationDrawerProps = {
  * on a soft navigation between two of its own routes; it is answered a level down, by
  * `DestinationLink`, from the URL alone.
  *
+ * The `<nav>` itself, its width and whether it is collapsed belong to `DrawerFrame`, the client
+ * frame this renders into: holding that boolean here would make this a client component and ship
+ * `permissions` and the destination table with it.
+ *
  * **Below `lg` the drawer is not rendered.** The canvas's answer at that width is a modal drawer
  * behind a menu button, which needs open/close state and is not part of this ticket; the desktop
  * drawer squeezed into a 375px viewport would be worse than either. What it costs today is
@@ -51,15 +58,22 @@ export function NavigationDrawer({ village, permissions }: NavigationDrawerProps
   const groups = groupBySection(visibleDestinations(NAV_DESTINATIONS, permissions));
 
   return (
-    <nav
-      aria-label="Portal"
-      className="sticky top-0 hidden h-dvh w-[360px] shrink-0 flex-col bg-surface-container-low p-3 lg:flex"
-    >
-      {/* The same wordmark the masthead sets, and a `<span>` for the same reason: the page's
-          heading is the app bar's `<h1>`, and a second one here would give the portal two. */}
-      <span className="title-l px-4 pt-4 pb-2 text-on-surface">
-        clave<em className="not-italic text-primary">HQ</em>
-      </span>
+    <DrawerFrame>
+      {/* The header row's padding is the canvas's 4px 8px 8px 4px rather than the wordmark's own
+          former `px-4 pt-4 pb-2`: the 48px button is taller than the 28px wordmark, so the row
+          tightens around it to leave the wordmark's baseline where it was. */}
+      <div className="flex items-center gap-1 pt-1 pr-2 pb-2 pl-1">
+        <SidebarToggle>
+          <MenuIcon />
+        </SidebarToggle>
+
+        {/* The same wordmark the masthead sets, and a `<span>` for the same reason: the page's
+            heading is the app bar's `<h1>`, and a second one here would give the portal two.
+            `whitespace-nowrap` so it does not rewrap into two lines on its way to 0px. */}
+        <span className="title-l whitespace-nowrap text-on-surface">
+          clave<em className="not-italic text-primary">HQ</em>
+        </span>
+      </div>
 
       <VillagePill village={village} />
 
@@ -88,7 +102,7 @@ export function NavigationDrawer({ village, permissions }: NavigationDrawerProps
           </div>
         ))}
       </div>
-    </nav>
+    </DrawerFrame>
   );
 }
 

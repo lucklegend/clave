@@ -41,10 +41,17 @@ export const sometypeMono = Sometype_Mono({
 // variable that `globals.css` reads.
 //
 // The upstream variable file carries the full ~3,000-glyph set at ~3.9MB; `./fonts/` ships a copy
-// subset to only the sixteen codepoints `features/portal/icons.tsx` addresses (~14KB), with
+// subset to only the seventeen codepoints `features/portal/icons.tsx` addresses (~14KB), with
 // `fonttools`' `pyftsubset` and no layout features, since codepoint addressing needs no `liga`
 // GSUB lookup. Re-run the subset if `icons.tsx` ever adds a codepoint that isn't in it yet —
-// `check-utilities.mjs` cannot see a missing glyph, only a missing class.
+// `check-utilities.mjs` cannot see a missing glyph, only a missing class. Ticket 0009's `menu`
+// (e5d2) was the first to need it, and the exact invocation that reproduces the file byte for
+// byte, from `variablefont/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf` in
+// `google/material-design-icons`, is:
+//
+//   pyftsubset <upstream.ttf> --unicodes=<the codepoints in icons.tsx, comma-separated> \
+//     --layout-features= --no-hinting --flavor=woff2 \
+//     --output-file=apps/web/src/app/fonts/material-symbols-outlined.woff2
 //
 // The four M3 axes (FILL, wght, GRAD, opsz) live on the font, not on this loader: `next/font`
 // exposes no per-call-site way to pin a variable axis's default, so `globals.css` sets them once

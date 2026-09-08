@@ -140,6 +140,17 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
   queue) is filed and now considerably cheaper, since it renders inside the shell that now
   exists instead of shipping its own chrome.
 
+- **2026-09-08** — Ticket 0009: the portal sidebar collapses from a hamburger beside the
+  `claveHQ` wordmark, and the top app bar sticks. The hamburger is retained when the sidebar
+  closes — it moves to the bar's leading slot, so the control that hid the drawer is what brings
+  it back. The bar takes M3's on-scroll tonal step to `surface-container`, and only while content
+  is actually underneath: it shares `surface` with the page and draws no divider, so sticking it
+  without a conditional boundary would slide content under an invisible edge. The collapse state
+  lives in thin `"use client"` frames (`ShellProvider`, `DrawerFrame`, `StickyBar`) so the
+  drawer stays a Server Component and the viewer's permission set never reaches the browser —
+  proved by grepping the built client chunks, not assumed. Designed on the M3 canvas first
+  (`Dashboard — Today`). Next: the announcement board, unchanged.
+
 ---
 
 ## Resume Prompt (paste this into Claude Code / a new chat to continue)
