@@ -49,7 +49,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             could paint the body background, already resolved from the OS media query, in the
             window before this ran: a ~120ms wrong-theme frame, reproduced in 2 of 10 trials at
             20x CPU throttling in both directions. Nothing paints before <head> is processed, so
-            here the window does not exist. */}
+            here the window does not exist. The app's CSP (see `next.config.ts`) omits `script-src`
+            because this tag carries no nonce; the fix is a nonce plumbed to here, never a
+            `defer`, `async`, `next/script`, or relocation of the tag. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="bg-surface text-on-surface">{children}</body>
