@@ -1,19 +1,28 @@
 /* ---------------------------------------------------------------------------
-   This file is over the house 400-line cap — 410 non-blank non-comment lines
-   today — and stays whole under the **config** exemption: Tailwind 4 moved
-   theme configuration out of a JS file and into CSS, and the `@theme inline`
-   block below is that config. Not under the *generated* exemption: every
-   value here is transcribed by hand from
+   This file is over the house 400-line cap — 612 code lines by the house
+   counting rule (`grep -cvE '^[[:space:]]*(//|/\*|\*|#|$)'`), which includes
+   this header's own prose lines exactly as it counts every other comment
+   block in the file that is not `*`-prefixed per line. That is 584 on
+   `main`, +20 for ticket 0007's `m3-icon` utility, +8 for this paragraph
+   correcting the number. The "410" this comment previously gave does not
+   reproduce under any counting method tried while fixing it — the overage
+   was already larger than this file believed before 0007 ever touched it.
+
+   Only the `@theme inline` block is covered by the **config** exemption:
+   Tailwind 4 moved theme configuration out of a JS file and into CSS, and
+   that block is the config. Not under the *generated* exemption: every
+   value in it is transcribed by hand from
    `packages/shared/src/theme/scheme.json`, which is this file's defining
    hazard and the reason `packages/shared/src/theme/check-tokens.mjs` exists.
 
-   The seam, when the file does need splitting, is the 15 type utilities plus
-   `num` — roughly 110 lines that depend on nothing but the `--f-*` families.
-   What blocks that split is not this file but the two check scripts:
-   `check-utilities.mjs` reads the known `@utility` names out of this path
-   alone and `check-tokens.mjs` hardcodes it too, so an extracted `type.css`
-   would make every `title-l` in the codebase report as an unknown utility.
-   Teach both to follow a relative `@import` first, then split.
+   Everything else — the 15 type utilities, `num`, `m3-state`, `m3-target`,
+   the `m3-morph` pair, and `m3-icon` — is ordinary authored CSS, not config,
+   and the exemption was never meant to cover it. It stays in this file
+   because of what actually blocks a split: `check-utilities.mjs` reads the
+   known `@utility` names out of this path alone and `check-tokens.mjs`
+   hardcodes it too, so an extracted `type.css` or `utilities.css` would make
+   every `title-l` and `m3-icon` in the codebase report as an unknown
+   utility. Teach both to follow a relative `@import` first, then split.
    --------------------------------------------------------------------------- */
 
 @import "tailwindcss";
@@ -566,6 +575,28 @@
    is meant to be. Pair with `m3-morph` and `active:rounded-m`. */
 @utility m3-morph-round {
   border-radius: 24px;
+}
+
+/* `features/portal/icons.tsx` addresses every glyph by codepoint, never by ligature name, so this
+   carries no `content: "search"` fallback text to flash before the font arrives — an unstyled
+   glyph is a blank box, not a word. The four M3 variable axes are pinned once here rather than at
+   each call site; `opsz 24` doubles as the font's own default position, kept explicit so a future
+   axis-default change upstream cannot silently resize every glyph in the drawer.
+   `--font-material-symbols` is `next/font/local`'s variable, declared where it is set
+   (`app/fonts.ts`) and only read here — the same contract `--font-bricolage-grotesque` and its
+   siblings already have with `--f-brand` above. */
+@utility m3-icon {
+  font-family: var(--font-material-symbols);
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  font-size: 24px;
+  line-height: 1;
+  display: inline-block;
 }
 
 /* ---------------------------------------------------------------------------

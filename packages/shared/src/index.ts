@@ -9,5 +9,6 @@ export {
   type SignInInput,
   type SignInResult,
 } from "./schemas/auth";
+export { permissionKeySchema, PERMISSION_KEYS, type PermissionKey } from "./schemas/permissions";
 export { readPublicEnv, type PublicEnv } from "./env";
 export type { Database, Json } from "./types/database";

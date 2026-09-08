@@ -11,7 +11,8 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check:theme": "node src/theme/check-tokens.mjs && node src/theme/check-utilities.mjs"
+    "check:theme": "node src/theme/check-tokens.mjs && node src/theme/check-utilities.mjs",
+    "check:permissions": "node src/schemas/check-permission-keys.mjs"
   },
   "dependencies": {
     "zod": "^4.5.4"

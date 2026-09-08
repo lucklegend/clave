@@ -1,6 +1,6 @@
 import { BrandMark } from "@/features/brand/components/BrandMark";
+import { Label } from "@/features/brand/components/Label";
 import { filledButton, outlinedButton } from "@/features/brand/cta";
-import { Label } from "./Label";
 
 // Concept figures, kept as the artifact has them. No cross-section reuse, so they stay here.
 const kpis = [

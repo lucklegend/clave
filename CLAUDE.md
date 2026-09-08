@@ -60,9 +60,25 @@ holds credentials. Capabilities are dotted keys in `public.permissions`
 them through `user_roles`, and `user_permissions` carries per-user `allow`/`deny`
 overrides.
 
-Ask `public.user_has_permission(permission, village, user)` — never assemble the
-joins at the call site. A `deny` beats everything, including super admin; a direct
-`allow` beats the absence of a role grant; super admin holds the rest.
+Ask, never assemble the joins at the call site. `public.user_has_permission(permission,
+village, user)` answers one boolean about one key and is right for a single guard at a
+mutation boundary. `public.user_permission_keys(village)` answers every key the _caller_
+holds in one round trip — no `p_user`, on purpose: a `SECURITY DEFINER` function that
+enumerates an arbitrary user's grants and is reachable with the anon key is a bulk
+permission-disclosure endpoint, so it only ever answers for `auth.uid()`. Use it to draw a
+whole page's worth of gates, such as the portal drawer's eleven destinations, rather than
+looping `user_has_permission` once per row. The two diverge on a key that does not exist in
+the catalogue — `user_has_permission` returns `true` for a super admin (its super-admin
+branch fires before any existence check), `user_permission_keys` returns `false` (it
+enumerates `public.permissions`) — so they are not interchangeable; see
+`docs/decisions/0002-village-scope-and-authz-seam.md`. In both, a `deny` beats everything,
+including super admin; a direct `allow` beats the absence of a role grant; super admin
+holds the rest.
+
+The TypeScript seam onto both is `apps/web/src/features/authz/` — pure permission helpers,
+`server/queries.ts` for the Supabase reads (`import "server-only"`), and
+`server/context.ts`'s `cache()`-wrapped `loadAuthzContext()` for the one-resolve-per-request
+that the portal shell, drawer, top bar and page all share.
 
 `village_id` on a _grant_ is the scope of that grant, which is not the same thing as
 `users.village_id`, the person's home village. One person can be an owner in village

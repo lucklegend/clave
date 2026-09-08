@@ -340,6 +340,7 @@ export type Database = {
         Args: { p_permission: string; p_user?: string; p_village?: string };
         Returns: boolean;
       };
+      user_permission_keys: { Args: { p_village?: string }; Returns: string[] };
     };
     Enums: {
       permission_effect: "allow" | "deny";
