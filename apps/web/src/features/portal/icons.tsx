@@ -94,7 +94,13 @@ export function RolesAndAccessIcon() {
   return <Glyph codepoint={0xf650} />;
 }
 
-// --- search, notifications, chevrons -------------------------------------------------------------
+// --- the shell's own controls: menu, search, notifications, chevrons -----------------------------
+
+// menu, e5d2 — the three-bar hamburger the sidebar toggle draws, in both the drawer header and
+// the app bar's leading slot.
+export function MenuIcon() {
+  return <Glyph codepoint={0xe5d2} />;
+}
 
 // search, ef7a.
 export function SearchIcon() {

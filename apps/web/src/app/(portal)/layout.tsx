@@ -4,6 +4,7 @@ import { loadAuthzContext } from "@/features/authz/server/context";
 import type { AuthzResult } from "@/features/authz/types";
 import { outlinedButton } from "@/features/brand/cta";
 import { NavigationDrawer } from "@/features/portal/components/NavigationDrawer";
+import { ShellProvider } from "@/features/portal/components/ShellProvider";
 import { TopAppBar } from "@/features/portal/components/TopAppBar";
 import { loadAccountName } from "@/features/portal/server/identity";
 import { materialSymbolsOutlined } from "../fonts";
@@ -20,6 +21,11 @@ import { materialSymbolsOutlined } from "../fonts";
  * nothing derived from the current route is computed here: the two things that have to follow a
  * client-side navigation — the drawer's active row and the app bar's `<h1>` — read the URL for
  * themselves, in `components/DestinationLink.tsx` and `components/PageHeading.tsx`.
+ *
+ * `ShellProvider` is the shell's only client state — is the drawer collapsed, has the content
+ * scrolled — and both the drawer and the app bar stay Server Components inside it, passing
+ * through the client frames that read those two booleans as already-rendered payload. **That is
+ * what keeps `permissions` out of the browser bundle**; see the note in `ShellProvider`.
  *
  * **Every route under here has to stay dynamic.** It is dynamic today because the session is
  * read from cookies, and the flat URLs are only safe on that basis: with the village resolved
@@ -51,14 +57,18 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
     // — and a variable declared where it is used says so. It changes what the class defines, not
     // what the browser downloads: `app/fonts.ts` is imported by the root layout, so Next
     // preloads all four faces on every route either way.
-    <div className={`${materialSymbolsOutlined.variable} flex min-h-dvh bg-surface`}>
-      <NavigationDrawer village={village} permissions={permissions} />
-      <div className="flex min-w-0 flex-1 flex-col">
+    // `h-dvh` and not `min-h-dvh`: the shell is exactly one viewport tall and the *column* inside
+    // `ShellProvider` scrolls, rather than the document. That is what the sticky app bar needs —
+    // it sticks to its scroll container, and it has to be told when that container has moved,
+    // which only an `onScroll` on the container itself can say. It is also why the drawer no
+    // longer needs `sticky top-0` to stay put: nothing scrolls past it any more.
+    <div className={`${materialSymbolsOutlined.variable} flex h-dvh bg-surface`}>
+      <ShellProvider drawer={<NavigationDrawer village={village} permissions={permissions} />}>
         <TopAppBar accountName={accountName} />
         {/* Each page renders its own <main>: the app bar owns the <h1> and the landmark belongs
             to the content under it, not to the column that holds the chrome. */}
         {children}
-      </div>
+      </ShellProvider>
     </div>
   );
 }

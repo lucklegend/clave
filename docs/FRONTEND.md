@@ -106,13 +106,23 @@ should not take down the shell.
 - **A layout cannot see its own route.** `app/(portal)/layout.tsx` is given `params` and
   `children` and nothing else — confirmed against `.next/types/routes.d.ts` and against what a
   Server Component actually receives under `next start` 16.3.4, which is `host`, `user-agent`,
-  `accept` and the `x-forwarded-*` set and no path anywhere. The drawer needs to mark one
-  destination `aria-current="page"` and the top bar needs to title the page, so `proxy.ts`
-  stamps `x-clavehq-pathname` on every portal request (`features/portal/pathname.ts`) and the
-  layout reads it back — display-only, nothing is authorised against it. The rejected
-  alternatives: `useSelectedLayoutSegment`, which drags the drawer and the permission set into
-  the browser bundle for information the server already has, and a `layout.tsx` per portal
-  route, which re-renders the shell on every navigation.
+  `accept` and the `x-forwarded-*` set and no path anywhere. A proxy-stamped header answered the server render, but
+  not the client one — a layout does not re-render on a soft navigation either, so the drawer's
+  active row and the bar's title both went stale on the first `<Link>`. Both now sit in small
+  `"use client"` leaves (`DestinationLink`, `PageHeading`) that read `usePathname()`; the header
+  and `features/portal/pathname.ts` are gone.
+
+  What that costs is bounded on purpose. The leaves receive an `href`, two class strings and a
+  two-entry title record — never `NAV_DESTINATIONS` and never the permission set, which stay on
+  the server where `visibleDestinations` filters them. That is the objection to
+  `useSelectedLayoutSegment` on the drawer itself, and it still stands; the other rejected
+  alternative was a `layout.tsx` per portal route, which re-renders the shell on every
+  navigation.
+
+  The same seam carries the collapsible sidebar (0009): `ShellProvider` holds `closed` and
+  `scrolled`, `DrawerFrame` and `StickyBar` read them for styling only, and the drawer's
+  server-rendered contents pass straight through as children.
+
 - Route Handlers only where a real HTTP endpoint is required. Today that is exactly one: the
   OAuth callback.
 - `next typegen` runs as part of `typecheck`, so typed routes are on — but they type page and
