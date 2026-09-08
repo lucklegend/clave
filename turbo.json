@@ -15,6 +15,11 @@
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
-    "check:theme": {}
+    "check:theme": {
+      "cache": false
+    },
+    "check:permissions": {
+      "cache": false
+    }
   }
 }

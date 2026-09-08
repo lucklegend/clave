@@ -11,6 +11,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "check:theme": "turbo run check:theme",
+    "check:permissions": "turbo run check:permissions",
     "format": "prettier --write .",
     "prepare": "husky"
   },

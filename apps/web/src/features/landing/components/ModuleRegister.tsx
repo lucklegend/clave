@@ -1,4 +1,4 @@
-import { Label } from "./Label";
+import { Label } from "@/features/brand/components/Label";
 import { RegisterSection } from "./RegisterSection";
 import { SectionHeading } from "./SectionHeading";
 

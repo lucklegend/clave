@@ -1,5 +1,9 @@
 import type { ComponentPropsWithoutRef } from "react";
 
+// Moved here from `features/landing/components/Label.tsx` when the portal became a caller, on
+// the precedent BrandMark set beside it: the landing page is where it was first needed, not what
+// it belongs to, and its own note below already named uses outside that page.
+//
 // The M3 `label-m` microlabel — KPI keys, dashboard <dt> terms, table sub-lines. A component
 // rather than a CSS class, per CLAUDE.md. Every use of it is a <span>, so it stays one;
 // callers add layout with `className` (never another type role — see SectionHeading, which

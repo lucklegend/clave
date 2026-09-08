@@ -12,12 +12,15 @@ Zod 4, pnpm 11, Node ≥20**. `apps/mobile` does not exist yet; §2 is the plan 
 ## 0. The design system
 
 **Material 3, whole product** — landing page, `/sign-in` and the portal. Proposed 2026-09-07,
-published as a canvas for review, and **adopted in code 2026-09-08** (ticket `0004`) across the
-three surfaces that exist today — `/`, `/sign-in`, the `/dashboard` stub. The portal itself is
-still not built and inherits the same tokens and components when it lands. Adopting M3 replaced
-the editorial design language's token block in `globals.css` wholesale, as §4 anticipated; the
-decision, its SchemeContent-over-TonalSpot reasoning and its component-level sub-decisions are
-recorded in `docs/decisions/0001-material-3.md`.
+published as a canvas for review, **adopted in code 2026-09-08** (ticket `0004`) across the three
+surfaces that existed then — `/`, `/sign-in`, the `/dashboard` stub — and the portal shell itself
+followed the same day (ticket `0007`): the 360px navigation drawer, top app bar and the Today
+dashboard at `/dashboard`, now inheriting the same tokens and components rather than anticipating
+them. Adopting M3 replaced the editorial design language's token block in `globals.css` wholesale,
+as §4 anticipated; the decision, its SchemeContent-over-TonalSpot reasoning and its
+component-level sub-decisions are recorded in `docs/decisions/0001-material-3.md`. The portal's
+own decisions — village scope, the capability seam, the grants fix — are recorded separately in
+`docs/decisions/0002-village-scope-and-authz-seam.md`.
 
 The colour scheme is **generated, not hand-picked**: `#8dc63f` (the brand green) is run through
 Google's Material Color Utilities with the **Content** scheme variant. Content preserves the
@@ -72,6 +75,18 @@ Rules:
 - `cookies()` and `headers()` already opt a segment out of static rendering. Do not "optimise"
   that away.
 
+**The rule applies by name to `apps/web/src/features/authz/`** (ticket `0007`), the seam that
+resolves a caller's village and permission set. It memoises with React's `cache()`, never
+`unstable_cache` or `"use cache"`, and the distinction is not cosmetic: `cache()` is
+per-request and dies with the request, while the other two persist **across** requests, keyed
+on their arguments. A permission set resolved for one caller and served to the next request for
+the same village and arguments is a cross-tenant escalation RLS never sees, because RLS was
+satisfied — for the first caller. The consequence travels one level up too: every route under
+`app/(portal)/` has to stay dynamically rendered for as long as village scope is resolved
+per-request with no cache key that includes it, so a `"use cache"` or a `revalidate` added to a
+portal route later reopens the same hazard at the page level rather than the query level. See
+`docs/decisions/0002-village-scope-and-authz-seam.md`.
+
 ### Streaming
 
 The dashboard is three independent reads — the work queue, the money figures, the booking
@@ -82,14 +97,31 @@ should not take down the shell.
 ### Routing and files
 
 - App Router only. Route groups for the portal shell: `app/(portal)/layout.tsx` holds the
-  navigation drawer and top app bar, so every module page inherits it without re-rendering it.
+  navigation drawer and top app bar, so `dashboard/page.tsx` and `settings/page.tsx` inside the
+  group inherit it without re-rendering it — a route group contributes nothing to the URL, so
+  both keep their flat paths.
 - `src/proxy.ts` is the session guard (Next 16's rename of middleware). Keep it thin — it
   redirects, it does not authorise. A page that reads user data still checks for itself, as
-  `dashboard/page.tsx` already does.
+  `(portal)/settings/page.tsx` already does.
+- **A layout cannot see its own route.** `app/(portal)/layout.tsx` is given `params` and
+  `children` and nothing else — confirmed against `.next/types/routes.d.ts` and against what a
+  Server Component actually receives under `next start` 16.3.4, which is `host`, `user-agent`,
+  `accept` and the `x-forwarded-*` set and no path anywhere. The drawer needs to mark one
+  destination `aria-current="page"` and the top bar needs to title the page, so `proxy.ts`
+  stamps `x-clavehq-pathname` on every portal request (`features/portal/pathname.ts`) and the
+  layout reads it back — display-only, nothing is authorised against it. The rejected
+  alternatives: `useSelectedLayoutSegment`, which drags the drawer and the permission set into
+  the browser bundle for information the server already has, and a `layout.tsx` per portal
+  route, which re-renders the shell on every navigation.
 - Route Handlers only where a real HTTP endpoint is required. Today that is exactly one: the
   OAuth callback.
-- `next typegen` runs as part of `typecheck`, so typed routes are already on. Use them.
-- `robots: { index: false }` on every authenticated route, as the dashboard already sets.
+- `next typegen` runs as part of `typecheck`, so typed routes are on — but they type page and
+  layout _exports_, not `<Link href>`. `href="/nope"` compiles in this configuration; typed
+  routes are not the guarantee against a dead link that they read as. Where that guarantee
+  matters, model it explicitly instead — `features/portal/nav/destinations.ts` derives a route
+  key map from the pages that actually exist and types every built destination's `href` against
+  it, rather than against the ambient `Route` type.
+- `robots: { index: false }` on every authenticated route, as `/settings` already sets.
 
 ### Client state
 
@@ -97,6 +129,26 @@ Per `CODE_STANDARDS.md`: server data lives in the TanStack Query cache, client s
 local UI state in `useState`. **Neither is installed yet** — see §4. When Query goes in, use the
 RSC-friendly pattern: prefetch on the server, `dehydrate` into a `<HydrationBoundary>`, and let
 the client component `useQuery` the same key. Do not fetch the same data twice.
+
+The portal shell and its authz seam (ticket `0007`) shipped without either, and that is not a
+gap to close — a server-rendered app whose mutations go through Server Actions has no server
+state to put in a Query cache and no cross-component client state to put in Zustand. The village
+and permission set are resolved once per request in `features/authz/server/context.ts` and passed
+down as props; the first module that genuinely needs client-side server state (something that
+changes after paint, on a page that isn't wholly server-rendered) is still what brings Query and
+Zustand in, same as before.
+
+### Icons
+
+Material Symbols is the icon set the M3 canvas draws from, and **`next/font/google` cannot serve
+it.** Confirmed against this repo's `next@16.3.4` bundled font manifest — 1,942 families, zero
+matching "Material Symbols" — because Google serves icon fonts from a different endpoint than the
+one `next/font/google` reads. The portal shell (`features/portal/icons.tsx`) self-hosts instead,
+via `next/font/local` with the glyph set subset from Google's 3.9MB variable font down to the
+roughly fifteen glyphs the shell actually draws (14KB), addressed by private-use-area codepoint
+rather than by ligature name — a `<span>foo</span>`-style ligature renders the literal word until
+the font loads, and self-hosting narrows that window without closing it; a codepoint renders
+nothing in the gap.
 
 ### Styling
 
@@ -186,10 +238,14 @@ Stated so nobody discovers them mid-feature:
 
 - **TanStack Query and Zustand are documented but not installed.** `CODE_STANDARDS.md` §3 and
   §4 describe a data layer that does not exist yet. The first module that needs client-side
-  server-state brings them in.
+  server-state brings them in — the portal shell and its authz seam (ticket `0007`) did not,
+  because a server-rendered app whose writes go through Server Actions had no server state or
+  cross-component client state to put in either.
 - **No test runner anywhere.** `CODE_STANDARDS.md` §6 names Vitest and Testing Library; neither
   is a dependency. The money paths — payment status changes, booking conflicts, permission
-  resolution — are the ones that earn tests first.
+  resolution — are the ones that earn tests first. `features/portal/nav/select.ts`'s
+  `visibleDestinations`, the pure function deciding which of the eleven nav destinations a
+  caller's permission set reveals, is the first candidate the day a runner lands.
 - **`apps/mobile` does not exist.** Everything in §2 is a plan.
 - **Settled, and worth restating because it is easy to break by accident: `rounded-l` /
   `rounded-s` resolving to the M3 shape scale is not the theme key winning outright — it depends
@@ -201,5 +257,9 @@ Stated so nobody discovers them mid-feature:
   with no failed build to flag it. A call site cannot out-specify the breakage either, since it
   arrives by source order. Recorded as a comment in `globals.css` (`@theme inline`) and in
   decision D2's consequences.
-- **`docs/decisions/` now has its first entry**, `0001-material-3.md`, per `CODE_STANDARDS.md`
-  §11. Nothing else is written up yet.
+- **`docs/decisions/` has two entries now**, `0001-material-3.md` and, from ticket `0007`,
+  `0002-village-scope-and-authz-seam.md` — the latter also records a live vulnerability found
+  and closed in the function grants underlying `public.user_has_permission`, and a direct
+  contradiction with `CLAUDE.md`'s note that Zustand holds "which village an admin is currently
+  viewing": village scope is server-resolved with no cookie and no URL segment, so the portal's
+  village switcher renders but cannot yet switch.
