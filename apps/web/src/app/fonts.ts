@@ -2,16 +2,18 @@ import { Bricolage_Grotesque, Instrument_Sans, Sometype_Mono } from "next/font/g
 
 // Self-hosted at build time, so the page costs no round trip to fonts.googleapis.com
 // and gets `size-adjust` fallback metrics for free. Each loader exposes a CSS variable
-// that `globals.css` folds into --f-display / --f-body / --f-mono with the artifact's
-// fallback stack behind it.
+// that `globals.css` folds into --f-brand / --f-plain / --f-mono with the M3 type
+// scale's fallback stack behind it.
 
-// Variable font: no `weight`. The artifact's Google URL also requests the `opsz` and
-// `wdth` axes, but nothing in the stylesheet sets `font-optical-sizing`, `font-stretch`
-// or `font-variation-settings`, so `axes` is deliberately not passed.
+// Variable font: no `weight`. `axes: ["opsz"]` opts into the optical-sizing axis: under
+// the M3 type scale this face now runs from 22px (`title-l`) to 57px (`display-l`),
+// exactly the range optical sizing exists for, and CSS's default
+// `font-optical-sizing: auto` does the rest with no further declaration.
 export const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-bricolage-grotesque",
+  axes: ["opsz"],
 });
 
 // Variable font: no `weight`.
@@ -21,7 +23,7 @@ export const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
 });
 
-// Static font: the three weights the artifact requests.
+// Static font: the three weights the M3 type scale requests.
 export const sometypeMono = Sometype_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],

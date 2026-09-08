@@ -11,8 +11,8 @@ import { THEME_STORAGE_KEY } from "./theme";
 //     same reason. A value off the list writes no attribute, and System is the absence of one.
 //   * `try`/`catch` is load-bearing: reading storage throws in Safari private mode, and an
 //     uncaught throw in a parser-blocking script takes the whole page down with it.
-//   * It does not set `style.colorScheme` (`globals.css:13,64,68` owns it) and does not write
-//     to storage. Reading one key and setting one attribute is its entire job.
+//   * It does not set `style.colorScheme` (the token blocks in `globals.css` own it) and does
+//     not write to storage. Reading one key and setting one attribute is its entire job.
 export const themeInitScript =
   `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});` +
   `if(t==="light"||t==="dark"){` +

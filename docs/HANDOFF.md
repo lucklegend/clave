@@ -6,7 +6,7 @@
 
 - **Name:** Heartbeat ClaveHQ — "The Heartbeat of Your Community"
 - **What it is:** Subscription SaaS (web + mobile) for HOA/subdivision/condo management — payment monitoring, announcements, amenity booking, incident reporting.
-- **Docs:** `PROJECT_PROPOSAL.md` (what & why), `TECH_STACK.md` (how, with reasoning), `CODE_STANDARDS.md` (conventions), `LOCAL_SETUP.md` (environment).
+- **Docs:** `PROJECT_PROPOSAL.md` (what & why), `TECH_STACK.md` (how, with reasoning), `CODE_STANDARDS.md` (conventions), `FRONTEND.md` (design system + Next.js/Expo conventions), `LOCAL_SETUP.md` (environment).
 
 ## Key Decisions Made (don't relitigate these without a reason)
 
@@ -37,6 +37,11 @@
   secret are set in `.env` at the repo root; see `.env.example`. Until then, sign in
   with the seeded development account — `alpha_admin` / `clavehq-test-1` (HOA Admin
   of Villa Alpha), recreated by `supabase/seed.sql` on every `db reset`.
+- **Material 3 is adopted** (0004, 2026-09-08) across all three built surfaces — `/`,
+  `/sign-in`, the `/dashboard` stub. The editorial design language is gone from
+  `apps/web`; see `docs/FRONTEND.md` §0 and `docs/decisions/0001-material-3.md`. The
+  portal shell, the payments verification queue and a real (non-stub) dashboard are
+  still unbuilt — M3 restyled what exists, it did not add a screen.
 - Next milestone: the announcement board — the first vertical slice through the whole
   stack now that auth and authorisation exist to scope it.
 
@@ -62,6 +67,28 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
 - **2026-09-05** — Scaffolded the Turborepo/pnpm workspace (`apps/web`, `packages/config` only — mobile, shared and Supabase deliberately deferred) and shipped the claveHQ landing page as `/` in `apps/web`. Next: Supabase project and schema.
 - **2026-09-06** — Added a masthead nav to the landing page's five sections, a light/dark theme toggle that follows the OS preference until first press and is applied before first paint via localStorage, and a `/sign-in` stub route with no auth logic. Next: Supabase project and schema, unchanged.
 - **2026-09-06** — Stood up local Supabase (Docker) and shipped auth end to end: the identity/RBAC schema with RLS on all seven tables, `packages/shared`, and a real `/sign-in` form (email-or-username + password, Remember me, Google OAuth) landing on a `/dashboard` stub. **Changed two settled decisions** — the web portal signs in with password + Google rather than phone OTP, and the profile table is `users` rather than `profiles`; both recorded above. Google needs a client ID/secret in `.env` before its button works. Next: the announcement board.
+- **2026-09-07** — Design session, **no code changed**. Designed the admin portal shell (left
+  rail + top bar, a "needs you" work queue, an amenity-booking calendar) as a canvas, then
+  redesigned the **whole product** — landing, sign-in, portal, mobile — into **Material 3** at
+  your request, with the scheme generated from the brand green `#8dc63f` via Material Color
+  Utilities (Content variant, so `primaryContainer` is exactly the brand green). Wrote
+  `docs/FRONTEND.md` covering the Next.js 16 / React 19 server-first conventions, the Expo plan
+  for `apps/mobile`, and the one-token-set-two-apps pipeline. **Pending your sign-off on the M3
+  canvas**; adopting it replaces the token block in `globals.css` wholesale. Next: either adopt
+  M3 in code, or proceed to the announcement board on the existing tokens.
+- **2026-09-08** — Adopted Material 3 in code (0004), on your sign-off the day before. The
+  editorial token block in `globals.css` is gone, replaced by the generated `#8dc63f`
+  `SchemeContent` scheme (`packages/shared/src/theme/scheme.json`, `gen-scheme.mjs`, and a
+  hand-run `check-tokens.mjs` that checks every token against the scheme and every contrast pair
+  against its WCAG floor), and all three built surfaces — `/`, `/sign-in`, `/dashboard` — are
+  restyled to M3 with no copy or content change. `mark-light.png` / `mark-dark.png` were
+  replaced in place with the M3-recoloured artwork rather than added alongside — same artwork,
+  remapped palette, `BrandMark.tsx` needs no change. Reconciled this repo's 44px tap-target rule
+  with M3's 40px button paint: buttons keep the 40px box and reach a 48px pointer target through
+  an expanded hit area, icon buttons are 48×48 outright. The first ADR,
+  `docs/decisions/0001-material-3.md`, records the scheme choice and these decisions. The portal
+  shell, the payments verification queue and a real (non-stub) dashboard remain unbuilt — this
+  ticket restyled what exists, it did not add a screen. Next: the announcement board, unchanged.
 
 ---
 

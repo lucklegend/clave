@@ -55,18 +55,16 @@ export function BillingRun() {
         heading="Reading to receipt, in five moves."
         note="A worked example for Unit B-14's electricity line. The steps are ordered because the run is ordered — nothing posts until the readings for a phase are all in."
       />
-      <div className="grid grid-cols-1 gap-px border border-rule bg-rule min-[760px]:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 min-[760px]:grid-cols-5">
         {steps.map((step) => (
           <div
             key={step.number}
-            className="flex flex-col gap-[7px] bg-paper px-[14px] pb-[18px] pt-4"
+            className="flex flex-col gap-2 rounded-m bg-surface-container-low px-4 pt-4 pb-5"
           >
-            <span className="font-mono text-[10.5px] tracking-[.14em] text-accent">
-              {step.number}
-            </span>
-            <h3 className="text-[15.5px] tracking-[-0.01em]">{step.heading}</h3>
-            <p className="text-[12.8px] text-ink-2">{step.body}</p>
-            <span className="mt-auto border-t border-dashed border-rule-strong pt-[10px] font-mono text-[11.5px] tabular-nums text-ink">
+            <span className="label-m text-primary">{step.number}</span>
+            <h3 className="title-m text-on-surface">{step.heading}</h3>
+            <p className="body-m text-on-surface-variant">{step.body}</p>
+            <span className="mt-auto border-t border-outline-variant pt-2.5 num body-m text-on-surface">
               {step.out}
             </span>
           </div>

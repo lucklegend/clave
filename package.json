@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "check:theme": "turbo run check:theme",
     "format": "prettier --write .",
     "prepare": "husky"
   },

@@ -20,7 +20,7 @@ const timeBands = ["08–11", "11–14", "14–17", "17–20", "20–23"] as con
 
 // Saturday 2026-09-19, Casa Verde — a static illustration of the slot board, not a live one.
 // `bkd` cells carry a unit code; `free` and `held` cells already say their state in words, so
-// only `bkd` needs the screen-reader-only "Booked by " prefix (design §7.5).
+// only `bkd` needs the screen-reader-only "Booked by " prefix.
 const amenityRows: readonly AmenityRow[] = [
   {
     name: "Clubhouse",
@@ -89,25 +89,29 @@ const bookingRules = [
 
 // `.cell` state classes — colour is never the only signal (see the `sr-only` prefix on `bkd`
 // below); `free` and `held` cells already spell out their state in the visible label.
+//
+// M3 has no warning role, so `held` takes `secondary-container` rather than a mix of a colour
+// that no longer exists. `bkd` names its text colour explicitly and must keep doing so:
+// `primary-container` is the brand green in *both* schemes, and the `on-surface` it would
+// otherwise inherit measures 1.58 on it in dark. `on-primary-container` is 4.58 in both.
 const cellStateClasses: Record<SlotState, string> = {
-  free: "text-muted",
-  held: "text-warn bg-[color-mix(in_srgb,var(--warn)_12%,transparent)]",
-  bkd: "bg-brand-green font-semibold text-on-green",
+  free: "text-on-surface-variant",
+  held: "bg-secondary-container text-on-secondary-container",
+  bkd: "bg-primary-container text-on-primary-container",
 };
 
 const colHeadClasses =
-  "border-b border-rule bg-surface px-2 py-2 text-center font-mono text-[10px] font-medium tracking-[.1em] uppercase text-muted";
+  "border-b border-outline-variant bg-surface-container px-2 py-2.5 text-center label-m text-on-surface-variant";
 
-// §04: the slot board. `.slots` scrolls sideways below its 520px floor (design §4.6) — the
-// column set is a time axis and cannot reduce further. The wrapper below it, not `.slots`
-// itself, is the `.bk` grid item, so the visible scroll hint stacks under the table both above
-// and below 900px; `[&>*]:min-w-0` on the grid (design §4.0) stops the scrollable table from
-// forcing the track wide.
+// The slot board. `.slots` scrolls sideways below its 520px floor — the column set is a time
+// axis and cannot reduce further. The wrapper below it, not `.slots` itself, is the `.bk` grid
+// item, so the visible scroll hint stacks under the table both above and below 900px;
+// `[&>*]:min-w-0` on the grid stops the scrollable table from forcing the track wide.
 //
 // The scroll container is `relative` so it is the containing block for its own `sr-only`
 // content. Tailwind's `sr-only` is `position:absolute`; against a static container the "Booked
 // by " prefixes below resolve against the initial containing block, escape the clip and push the
-// *document* 97px wide at 320px — the one thing design §4.0 forbids.
+// *document* 97px wide at 320px — the one thing this layout must never do.
 export function AmenitiesSection() {
   return (
     <RegisterSection id="amenities" headingId="amenities-h">
@@ -124,9 +128,9 @@ export function AmenitiesSection() {
             role="region"
             aria-label="Amenity slot grid, Saturday 2026-09-19"
             tabIndex={0}
-            className="relative overflow-x-auto border border-rule-strong bg-surface-2"
+            className="relative overflow-x-auto rounded-l bg-surface-container-low"
           >
-            <table className="w-full min-w-[520px] border-collapse text-[12px]">
+            <table className="w-full min-w-[520px] border-collapse">
               <caption className="sr-only">
                 Amenity slot availability, Saturday 2026-09-19, Casa Verde
               </caption>
@@ -144,23 +148,25 @@ export function AmenitiesSection() {
               </thead>
               <tbody>
                 {amenityRows.map((row) => (
-                  <tr key={row.name}>
+                  // The board is a filled card now, with no border of its own, so the last row's
+                  // bottom rule would read as one — and the 16px radius would clip its ends.
+                  <tr key={row.name} className="last:[&>*]:border-b-0">
                     <th
                       scope="row"
-                      className="border-b border-r border-rule px-2 py-2 text-left text-[13px] font-medium text-ink"
+                      className="border-b border-r border-outline-variant px-2 py-2 text-left title-m text-on-surface"
                     >
                       {row.name}
-                      <small className="mt-[1px] block font-mono text-[10px] text-muted">
+                      <small className="mt-[1px] block num body-s text-on-surface-variant">
                         {row.rate}
                       </small>
                     </th>
                     {row.slots.map((slot, i) => (
                       <td
                         key={`${row.name}-${i}`}
-                        className="border-b border-r border-rule p-0 last:border-r-0"
+                        className="border-b border-r border-outline-variant p-0 last:border-r-0"
                       >
                         <span
-                          className={`block px-[6px] py-[11px] text-center font-mono text-[10px] uppercase tracking-[.08em] ${cellStateClasses[slot.state]}`}
+                          className={`block px-[6px] py-[11px] text-center label-m ${cellStateClasses[slot.state]}`}
                         >
                           {slot.state === "bkd" && <span className="sr-only">Booked by </span>}
                           {slot.label}

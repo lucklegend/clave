@@ -1,8 +1,8 @@
-// The whole theme mechanism. `globals.css:12-87` already carries the three token blocks —
+// The whole theme mechanism. The token blocks in `globals.css` already carry it —
 // `:root` light, the `prefers-color-scheme: dark` block for System, and the two
 // `[data-theme]` overrides — so all this module does is set, clear and remember one
-// attribute on <html>. It never touches `style.colorScheme`: the CSS sets that itself
-// (`globals.css:13,64,68`), and a second writer of the same property is a race.
+// attribute on <html>. It never touches `style.colorScheme`: every one of those blocks
+// declares it, and a second writer of the same property is a race.
 //
 // No `"use client"`. It is a plain module, importable from a server file (the root layout
 // pulls the storage key through `theme-script.ts`) and from a client one alike.
@@ -38,8 +38,8 @@ export function readStoredTheme(): ThemeChoice {
 }
 
 /**
- * System is the *absence* of the attribute, so the media query at `globals.css:41` decides;
- * light and dark are the explicit overrides that exclude it.
+ * System is the *absence* of the attribute, so the `prefers-color-scheme` block in
+ * `globals.css` decides; light and dark are the explicit overrides that exclude it.
  */
 export function applyTheme(choice: ThemeChoice): void {
   if (choice === "system") {

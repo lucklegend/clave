@@ -13,9 +13,12 @@ export function RuleList({ rules }: RuleListProps) {
   return (
     <div className="grid">
       {rules.map((rule) => (
-        <div key={rule.heading} className="grid gap-[3px] border-b border-rule py-3 first:pt-0">
-          <h3 className="text-[14px] tracking-[-0.005em]">{rule.heading}</h3>
-          <p className="text-[13px] text-ink-2">{rule.body}</p>
+        <div
+          key={rule.heading}
+          className="grid gap-[3px] border-b border-outline-variant py-3.5 first:pt-0"
+        >
+          <h3 className="title-m text-on-surface">{rule.heading}</h3>
+          <p className="body-m text-on-surface-variant">{rule.body}</p>
         </div>
       ))}
     </div>

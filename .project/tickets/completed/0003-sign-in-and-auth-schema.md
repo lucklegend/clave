@@ -1,7 +1,7 @@
 # 0003 — Sign-in page, Supabase auth, and the RBAC schema
 
 **Filed:** 2026-09-06
-**Stage:** in_progress
+**Stage:** completed
 
 ## What was asked
 
@@ -122,3 +122,35 @@ nothing — it is a list of labels.
 Sign-up, password reset, invitations, the admin UI for assigning roles, and every
 module behind `/dashboard`. The dashboard is a stub that proves the session, profile
 and grants resolve.
+
+## Delivered — reconciled 2026-09-07
+
+Found and closed alongside ticket 0002 while filing 0004 (M3 theme adoption): this
+ticket's branch, `feat/0003-sign-in-and-auth-schema`, was committed straight to `main`
+as `9e5dc20` — "feat: sign-in with password and Google OAuth, and the RBAC schema" —
+on top of 0002's `a6f9fd6`. The board was never updated to match; the ticket sat in
+`in_progress` with no indication the code had already shipped.
+
+Verification actually performed is recorded in `works.md`
+(`.agent-work/0003-sign-in-and-auth-schema/works.md`, 2026-09-06): schema migrations,
+`user_has_permission` authorisation cases (deny-beats-role, cross-village denial, the
+NULL-`village_id` trigger rejection), RLS row-visibility per village, sign-in
+(email/username/case-insensitive/wrong-password/unknown-identifier/suspended-account,
+one identical rejection message throughout), route guards, and the Remember-me cookie
+lifetime — all by hand against a real local Supabase stack, no test runner existing to
+automate any of it.
+
+**Gate and review status — worth reading before treating this as settled, more than
+0001 or 0002.** `.agent-work/0003-sign-in-and-auth-schema/` contains **only
+`works.md`** — no `plan.md`, no `design.md`, no `review.md`, no
+`security-review.md`. This ticket built the RLS policies, the `SECURITY DEFINER`
+authorisation functions, the service-role key's one sanctioned reader, and the
+suspended-account/enumeration-resistant sign-in flow — CODE_STANDARDS.md's own words
+call `village_id` RLS scoping "the single most security-critical rule" in the
+codebase — and **none of it ever had a security review**, mid-loop or otherwise, let
+alone a code review or the stage-6 merge gate. 0002's one security-sensitive step at
+least got reviewed (`CLEARED WITH NOTES`); this ticket's security-relevant surface is
+larger and got none. This is a real gap, not a formality — worth a standalone security
+review of the auth/RBAC code before it carries more weight (real payment data,
+production users), independent of the M3 theme ticket this reconciliation was done
+for.

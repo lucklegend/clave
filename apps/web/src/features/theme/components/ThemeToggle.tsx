@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { iconButton } from "@/features/brand/cta";
 import { applyTheme, readStoredTheme, setTheme, type ThemeChoice } from "../theme";
 
 // The two themes the button switches between. `system` stays the stored default until the first
@@ -23,38 +24,51 @@ const actionLabels = {
   dark: "Switch to dark theme",
 } satisfies Record<ResolvedTheme, string>;
 
-// Paired with the Sign in ghost button beside it: same 2px radius, same `--muted` border — never
-// `--rule-strong`, which is 2.08:1 light / 1.82:1 dark on this `--surface` band and fails WCAG
-// 1.4.11 for the boundary of a UI component — and the same 120ms colour transition, which the
-// reduced-motion blanket in `globals.css` removes outright. There is no transform end-state left
-// over, so no `motion-reduce:` companion is wanted. `group` is what lets the glyph fill on hover.
-// 44px square is the tap target: the icon is 16px and would otherwise be a 16px one. Unlike the
-// two-state toggle in `StatementCard` this is not `overflow-hidden`, so the global
-// `:focus-visible` ring is not clipped at its usual +2px offset and needs no inset override.
-const buttonClasses =
-  "group inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center " +
-  "rounded-[2px] border border-muted bg-transparent text-muted transition-colors " +
-  "duration-[120ms] ease-[ease] hover:text-ink";
+// The site's only icon button, and M3 draws one at 48x48 outright — no border, no fill, the
+// `m3-state` layer inside `iconButton` doing the whole hover job that a border plus a
+// `hover:text-ink` pair used to do. 48 is not this repo's old 44px floor restated: it is M3's
+// icon-button spec, and it is the other half of D1, where a *text* button stays painted at 40px
+// and reaches 48 through `m3-target`'s expanded hit area instead. Being the tallest thing in the
+// masthead, this box is also what sets the band's height, which `RegisterSection`'s `scroll-mt-*`
+// is sized against.
+//
+// `iconButton` states no radius, so this call site states the one the morph needs.
+// `m3-morph-round` paints the same 48px circle a full round does, from a pinned 24px — and a
+// transition interpolates the *specified* radius, so starting from 9999px would send the spring's
+// overshoot to roughly -935px and clamp the corner square mid-press (`globals.css` carries the
+// arithmetic). The password reveal, the other `iconButton` caller, does not morph and writes
+// `rounded-full`.
+//
+// Shape, not colour, is what says "pressed" under M3 Expressive. The reduced-motion blanket in
+// `globals.css` kills the morph outright and the rest state is the correct static one, so no
+// `motion-reduce:` companion is wanted. Unlike the two-state toggle in `StatementCard` this is
+// not `overflow-hidden`, so the global `:focus-visible` ring is not clipped at its usual +2px
+// offset and needs no inset override.
+const buttonClasses = `${iconButton} cursor-pointer m3-morph-round m3-morph active:rounded-m`;
 
-// The site's first iconography. Hand-authored inline SVG rather than an icon package: two glyphs
-// do not justify a dependency, and both have to answer to `currentColor` and to one hover class.
-// `aria-hidden` on each, because the button already carries the name.
+// The site's only iconography. Hand-authored inline SVG rather than an icon package: two glyphs
+// do not justify a dependency, and both have to answer to `currentColor`. `aria-hidden` on each,
+// because the button already carries the name.
+//
+// Both are drawn on M3's 24-box grid at the design's 1.6px stroke, not the old 16-box pair scaled
+// up: a glyph grid is a design, and 16px geometry enlarged 1.5x lands its strokes off the pixel
+// and its rays out of proportion. The `group-hover:fill-current` disc and crescent are gone with
+// the `group` — the state layer behind them is the hover affordance now, and a glyph that fills
+// on top of it is two signals for one event.
 function SunIcon() {
   return (
     <svg
-      viewBox="0 0 16 16"
-      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.25}
+      strokeWidth={1.6}
       strokeLinecap="round"
       aria-hidden="true"
       focusable="false"
     >
-      {/* Only the disc takes the hover fill. Filling the rays as well would close the gaps
-          between them and turn the glyph into a blob at 16px. */}
-      <circle cx="8" cy="8" r="3.5" className="group-hover:fill-current" />
-      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M12.95 3.05l-1.06 1.06M4.11 11.89l-1.06 1.06" />
+      <circle cx="12" cy="12" r="4.6" />
+      <path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7" />
     </svg>
   );
 }
@@ -62,22 +76,19 @@ function SunIcon() {
 function MoonIcon() {
   return (
     <svg
-      viewBox="0 0 16 16"
-      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.25}
+      strokeWidth={1.6}
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
     >
       {/* One closed path, so the crescent reads the same stroked or filled: the outer edge is the
-          long arc of the circle centred (8,8) r5.5, the bite the short arc of the equal circle
-          centred (12.125,3.875). They meet at the two intersection points, so there is no seam. */}
-      <path
-        d="M13.36 9.23A5.5 5.5 0 1 1 6.77 2.64A5.5 5.5 0 0 0 13.36 9.23Z"
-        className="group-hover:fill-current"
-      />
+          long arc of an r8.5 circle, the bite the short arc of an equal circle offset up and to
+          the right. The two arcs share both endpoints, so there is no seam to show at 24px. */}
+      <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a8.5 8.5 0 0 0 10.7 10.7z" />
     </svg>
   );
 }

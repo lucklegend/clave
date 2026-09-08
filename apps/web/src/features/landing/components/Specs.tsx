@@ -9,7 +9,7 @@ type Spec = {
 
 // The artifact's `.v` inline value spans — short mono figures set inside prose.
 function Value({ children }: { children: ReactNode }) {
-  return <span className="font-mono font-medium tabular-nums text-accent">{children}</span>;
+  return <span className="num font-medium text-primary">{children}</span>;
 }
 
 // §05: the six specs a deployment assumes. Verbatim from the artifact's `dl.specs`.
@@ -76,13 +76,11 @@ export function Specs() {
         heading="What a deployment assumes."
         note="Sized for a village, not an enterprise. One admin, one or two window clerks, a handful of crew, and a few thousand households who mostly want to know what they owe."
       />
-      <dl className="grid grid-cols-1 gap-px border border-rule bg-rule min-[640px]:grid-cols-2 min-[1000px]:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1000px]:grid-cols-3">
         {specs.map((spec) => (
-          <div key={spec.term} className="bg-paper px-[15px] py-[14px]">
-            <dt className="font-mono text-[10px] uppercase tracking-[.12em] text-muted">
-              {spec.term}
-            </dt>
-            <dd className="mt-[5px] text-[13.5px] text-ink">{spec.description}</dd>
+          <div key={spec.term} className="rounded-m bg-surface-container-low px-4 py-4">
+            <dt className="label-m text-on-surface-variant">{spec.term}</dt>
+            <dd className="mt-[5px] body-m text-on-surface">{spec.description}</dd>
           </div>
         ))}
       </dl>

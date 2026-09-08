@@ -1,5 +1,3 @@
-import { Label } from "./Label";
-
 export type SectionHeadingProps = {
   /** The <h2> id. The owning <section> passes the same value to `aria-labelledby` — a section
    *  with no accessible name is not a landmark at all. */
@@ -13,15 +11,18 @@ export type SectionHeadingProps = {
 };
 
 // The artifact's `.sec-hd`: eyebrow beside a heading-and-note column from 860px, stacked below.
+// The eyebrow renders `label-l` directly rather than through <Label> (which is `label-m`) — a
+// className type-role override cannot beat a same-layer utility declared later in globals.css,
+// so `<Label className="label-l">` would silently stay `label-m`.
 export function SectionHeading({ id, index, label, heading, note }: SectionHeadingProps) {
   return (
     <div className="mb-7 grid gap-3 min-[860px]:grid-cols-[170px_1fr] min-[860px]:items-start min-[860px]:gap-7">
-      <Label>{`${index} — ${label}`}</Label>
+      <span className="label-l text-on-surface-variant">{`${index} — ${label}`}</span>
       <div>
-        <h2 id={id} className="text-[clamp(24px,3.2vw,33px)] tracking-[-0.03em]">
+        <h2 id={id} className="headline-m text-on-surface">
           {heading}
         </h2>
-        <p className="mt-2 max-w-[62ch] text-[14.5px] text-ink-2">{note}</p>
+        <p className="body-l mt-2 max-w-[62ch] text-on-surface-variant">{note}</p>
       </div>
     </div>
   );
