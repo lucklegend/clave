@@ -139,6 +139,20 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
   a page behind it. Next: the announcement board, unchanged — and ticket 0006 (the payments
   queue) is filed and now considerably cheaper, since it renders inside the shell that now
   exists instead of shipping its own chrome.
+- **2026-09-08** — Closed SEC-1 from 0004's security review (0005): `/sign-in`'s credential form
+  and `/dashboard`'s sign-out form shipped with no framing protection. `apps/web/next.config.ts`
+  now serves four headers on every response — `Content-Security-Policy: frame-ancestors 'none'`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `X-Content-Type-Options: nosniff`. The part worth carrying forward: a nonce-based CSP was
+  scoped out on purpose, not overlooked. `/` is prerendered at build time
+  (`"compute": "static"` in `apps/web/.next/prerender-manifest.json`) and its built HTML carries
+  five inline `<script>` tags, four of them Next RSC flight pushes; a per-request nonce cannot
+  reach a file that was already written to disk at build time, so any `script-src` added to this
+  CSP would serve the landing page unhydrated. That work is a follow-up ticket and should start
+  in report-only mode. Full account, including the free/not-free header table and why HSTS, COOP,
+  COEP and `Permissions-Policy` all wait, in
+  `docs/decisions/0003-security-headers-and-the-deferred-csp.md`. Next: the announcement board,
+  unchanged.
 
 ---
 

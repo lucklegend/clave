@@ -123,6 +123,24 @@ should not take down the shell.
   it, rather than against the ambient `Route` type.
 - `robots: { index: false }` on every authenticated route, as `/settings` already sets.
 
+### Response headers
+
+Security headers live in `apps/web/next.config.ts`'s `headers()`, not `src/proxy.ts` — the
+proxy's matcher (see "Routing and files" above, and the comment at `src/proxy.ts:110–137`)
+deliberately excludes `_next/static`, `_next/image`, `favicon.ico` and a handful of other static
+paths, and header delivery must not inherit that hole; `next.config.ts` headers apply to every
+response, static assets included. Every response currently carries:
+
+- `Content-Security-Policy: frame-ancestors 'none'`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `X-Content-Type-Options: nosniff`
+
+**Do not add `script-src` to that CSP without first plumbing a nonce.** `/` is prerendered at
+build time, so a per-request nonce can never reach its inline scripts, and adding `script-src`
+without one blanks the site. See `docs/decisions/0003-security-headers-and-the-deferred-csp.md`
+for the evidence and what the eventual nonce-based CSP has to touch.
+
 ### Client state
 
 Per `CODE_STANDARDS.md`: server data lives in the TanStack Query cache, client state in Zustand,

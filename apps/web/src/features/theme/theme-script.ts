@@ -7,6 +7,12 @@ import { THEME_STORAGE_KEY } from "./theme";
 //   * ES5-safe and dependency-free. Nothing in this string is compiled, bundled or polyfilled.
 //   * The only interpolation is the storage key constant, escaped by `JSON.stringify` rather
 //     than quoted by hand. Nothing runtime-derived is ever spliced into it.
+//   * This string is inlined into <head> with no nonce. `JSON.stringify` escapes quotes and
+//     backslashes but not `</script>`, `<!--`, or U+2028/U+2029 — and the app's CSP (see
+//     `next.config.ts`) deliberately carries no `script-src`, so this literal being a
+//     module-level constant is the only thing between the document head and an injected
+//     script. Making the storage key runtime-derived, env-read or tenant-derived is an XSS
+//     change, not a config change.
 //   * The `light` / `dark` whitelist is repeated rather than imported from `theme.ts` for the
 //     same reason. A value off the list writes no attribute, and System is the absence of one.
 //   * `try`/`catch` is load-bearing: reading storage throws in Safari private mode, and an
