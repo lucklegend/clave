@@ -10,7 +10,8 @@
   },
   "scripts": {
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:theme": "node src/theme/check-tokens.mjs && node src/theme/check-utilities.mjs"
   },
   "dependencies": {
     "zod": "^4.5.4"

@@ -52,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             here the window does not exist. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="bg-paper text-ink">{children}</body>
+      <body className="bg-surface text-on-surface">{children}</body>
     </html>
   );
 }

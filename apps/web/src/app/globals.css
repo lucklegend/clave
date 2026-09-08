@@ -1,62 +1,149 @@
+/* ---------------------------------------------------------------------------
+   This file is over the house 400-line cap — 410 non-blank non-comment lines
+   today — and stays whole under the **config** exemption: Tailwind 4 moved
+   theme configuration out of a JS file and into CSS, and the `@theme inline`
+   block below is that config. Not under the *generated* exemption: every
+   value here is transcribed by hand from
+   `packages/shared/src/theme/scheme.json`, which is this file's defining
+   hazard and the reason `packages/shared/src/theme/check-tokens.mjs` exists.
+
+   The seam, when the file does need splitting, is the 15 type utilities plus
+   `num` — roughly 110 lines that depend on nothing but the `--f-*` families.
+   What blocks that split is not this file but the two check scripts:
+   `check-utilities.mjs` reads the known `@utility` names out of this path
+   alone and `check-tokens.mjs` hardcodes it too, so an extracted `type.css`
+   would make every `title-l` in the codebase report as an unknown utility.
+   Teach both to follow a relative `@import` first, then split.
+   --------------------------------------------------------------------------- */
+
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Token blocks — transcribed from the reference artifact.
+   Material 3 colour roles, generated with Google's Material Color Utilities
+   (SchemeContent) from the brand green #8dc63f and committed at
+   `packages/shared/src/theme/scheme.json`. SchemeContent rather than the
+   default TonalSpot: it preserves the seed's chroma, which is why
+   --md-primary-container is literally #8dc63f in both schemes. The brand green
+   did not survive as a decoration; it became a role.
 
-   Three blocks, deliberately not collapsed into Tailwind's `dark:` variant:
-   the system preference decides by default, and a `data-theme` attribute on
-   <html> overrides it in either direction. Nothing ships that sets the
-   attribute; it is the hook a future toggle writes to.
+   Every value below is `content.light` / `content.dark` from that file, and a
+   literal hex anywhere outside it is a bug. That file is also where
+   `apps/mobile` will read the same scheme from.
+
+   Four blocks, deliberately not collapsed into Tailwind's `dark:` variant: the
+   system preference decides by default, and a `data-theme` attribute on <html>
+   overrides it in either direction. `features/theme/theme-script.ts` stamps
+   that attribute before first paint.
    --------------------------------------------------------------------------- */
 
 :root {
   color-scheme: light dark;
 
-  --paper: #edf0ec;
-  --surface: #f7f9f5;
-  --surface-2: #fcfdfb;
-  --ink: #17253f;
-  --ink-2: #3d4a61;
-  /* Artifact ships #6C7686 (3.98:1 on --paper). Every use is 10-11.5px text,
-     which WCAG 1.4.3 holds to 4.5:1. Darkened one step to 4.73:1. */
-  --muted: #616b7b;
-  --rule: #cbd1cb;
-  --rule-strong: #a8b1ab;
-  /* Artifact ships #55811A (4.06:1). Used at 10.5-15px for the module code,
-     step number, spec value and footer mark. Darkened one step to 4.83:1. */
-  --accent: #4c7415;
-  --accent-ink: #41660f;
-  --accent-soft: rgba(141, 198, 63, 0.16);
-  --brand-green: #8dc63f;
-  --on-green: #17253f;
-  --ok: #2e6b4e;
-  --warn: #8a6100;
-  --crit: #a3301f;
-  --shadow: 0 1px 0 rgba(23, 37, 63, 0.06);
-  --f-display: var(--font-bricolage-grotesque), "Helvetica Neue", Arial, sans-serif;
-  --f-body: var(--font-instrument-sans), "Helvetica Neue", Arial, sans-serif;
+  --md-primary: #426900;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #8dc63f;
+  --md-on-primary-container: #304f00;
+  --md-secondary: #4f6530;
+  --md-on-secondary: #ffffff;
+  --md-secondary-container: #d1eca9;
+  --md-on-secondary-container: #556c36;
+  --md-tertiary: #006c45;
+  --md-on-tertiary: #ffffff;
+  --md-tertiary-container: #00cf88;
+  --md-on-tertiary-container: #005233;
+  --md-error: #ba1a1a;
+  --md-on-error: #ffffff;
+  --md-error-container: #ffdad6;
+  --md-on-error-container: #93000a;
+  --md-background: #f8fbeb;
+  --md-on-background: #191d14;
+  --md-surface: #f8fbeb;
+  --md-on-surface: #191d14;
+  --md-surface-variant: #dfe5ce;
+  --md-on-surface-variant: #424938;
+  --md-surface-dim: #d8dccc;
+  --md-surface-bright: #f8fbeb;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #f2f5e6;
+  --md-surface-container: #ecefe0;
+  --md-surface-container-high: #e7eada;
+  --md-surface-container-highest: #e1e4d5;
+  --md-outline: #737a66;
+  --md-outline-variant: #c2c9b3;
+  --md-inverse-surface: #2e3227;
+  --md-inverse-on-surface: #eff2e3;
+  --md-inverse-primary: #9dd84f;
+  --md-scrim: #000000;
+  --md-shadow: #000000;
+
+  /* M3 shape scale. `full` is Tailwind's static `rounded-full`, so it needs no
+     token; the five steps below map to `rounded-xs/s/m/l/xl`. */
+  --md-shape-xs: 4px;
+  --md-shape-s: 8px;
+  --md-shape-m: 12px;
+  --md-shape-l: 16px;
+  --md-shape-xl: 28px;
+
+  /* M3 elevation levels 1-3, derived from the `shadow` role rather than from a
+     hardcoded rgba() so a scheme change reaches them. Used as
+     `shadow-[var(--md-elev-1)]`; levels 2 and 3 have no consumer on the three
+     built surfaces and are declared so the set stays whole. */
+  --md-elev-1:
+    0px 1px 2px 0px color-mix(in srgb, var(--md-shadow) 30%, transparent),
+    0px 1px 3px 1px color-mix(in srgb, var(--md-shadow) 15%, transparent);
+  --md-elev-2:
+    0px 1px 2px 0px color-mix(in srgb, var(--md-shadow) 30%, transparent),
+    0px 2px 6px 2px color-mix(in srgb, var(--md-shadow) 15%, transparent);
+  --md-elev-3:
+    0px 1px 3px 0px color-mix(in srgb, var(--md-shadow) 30%, transparent),
+    0px 4px 8px 3px color-mix(in srgb, var(--md-shadow) 15%, transparent);
+
+  /* M3's two-font split, filled with the faces `app/fonts.ts` already loads.
+     Sometype Mono is an addition, not an M3 role: M3 has no monospace, and a
+     portal made of money needs figures that line up. */
+  --f-brand: var(--font-bricolage-grotesque), "Helvetica Neue", Arial, sans-serif;
+  --f-plain: var(--font-instrument-sans), "Helvetica Neue", Arial, sans-serif;
   --f-mono: var(--font-sometype-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0f1626;
-    --surface: #151e31;
-    --surface-2: #1b263c;
-    --ink: #e6eaf0;
-    --ink-2: #b4bdcc;
-    --muted: #7e8798;
-    --rule: #26314a;
-    --rule-strong: #3b4864;
-    --accent: #9bd34a;
-    --accent-ink: #b2e068;
-    --accent-soft: rgba(155, 211, 74, 0.14);
-    --brand-green: #8dc63f;
-    --on-green: #0f1626;
-    --ok: #5ba97f;
-    --warn: #d6a63f;
-    --crit: #e0705c;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    --md-primary: #a7e358;
+    --md-on-primary: #203600;
+    --md-primary-container: #8dc63f;
+    --md-on-primary-container: #304f00;
+    --md-secondary: #b5d08f;
+    --md-on-secondary: #223606;
+    --md-secondary-container: #3a501d;
+    --md-on-secondary-container: #a7c182;
+    --md-tertiary: #43eca2;
+    --md-on-tertiary: #003822;
+    --md-tertiary-container: #00cf88;
+    --md-on-tertiary-container: #005233;
+    --md-error: #ffb4ab;
+    --md-on-error: #690005;
+    --md-error-container: #93000a;
+    --md-on-error-container: #ffdad6;
+    --md-background: #11150c;
+    --md-on-background: #e1e4d5;
+    --md-surface: #11150c;
+    --md-on-surface: #e1e4d5;
+    --md-surface-variant: #424938;
+    --md-on-surface-variant: #c2c9b3;
+    --md-surface-dim: #11150c;
+    --md-surface-bright: #373b30;
+    --md-surface-container-lowest: #0c0f07;
+    --md-surface-container-low: #191d14;
+    --md-surface-container: #1d2117;
+    --md-surface-container-high: #282b21;
+    --md-surface-container-highest: #32362c;
+    --md-outline: #8c937f;
+    --md-outline-variant: #424938;
+    --md-inverse-surface: #e1e4d5;
+    --md-inverse-on-surface: #2e3227;
+    --md-inverse-primary: #426900;
+    --md-scrim: #000000;
+    --md-shadow: #000000;
   }
 }
 
@@ -67,59 +154,418 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper: #0f1626;
-  --surface: #151e31;
-  --surface-2: #1b263c;
-  --ink: #e6eaf0;
-  --ink-2: #b4bdcc;
-  --muted: #7e8798;
-  --rule: #26314a;
-  --rule-strong: #3b4864;
-  --accent: #9bd34a;
-  --accent-ink: #b2e068;
-  --accent-soft: rgba(155, 211, 74, 0.14);
-  --brand-green: #8dc63f;
-  --on-green: #0f1626;
-  --ok: #5ba97f;
-  --warn: #d6a63f;
-  --crit: #e0705c;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  --md-primary: #a7e358;
+  --md-on-primary: #203600;
+  --md-primary-container: #8dc63f;
+  --md-on-primary-container: #304f00;
+  --md-secondary: #b5d08f;
+  --md-on-secondary: #223606;
+  --md-secondary-container: #3a501d;
+  --md-on-secondary-container: #a7c182;
+  --md-tertiary: #43eca2;
+  --md-on-tertiary: #003822;
+  --md-tertiary-container: #00cf88;
+  --md-on-tertiary-container: #005233;
+  --md-error: #ffb4ab;
+  --md-on-error: #690005;
+  --md-error-container: #93000a;
+  --md-on-error-container: #ffdad6;
+  --md-background: #11150c;
+  --md-on-background: #e1e4d5;
+  --md-surface: #11150c;
+  --md-on-surface: #e1e4d5;
+  --md-surface-variant: #424938;
+  --md-on-surface-variant: #c2c9b3;
+  --md-surface-dim: #11150c;
+  --md-surface-bright: #373b30;
+  --md-surface-container-lowest: #0c0f07;
+  --md-surface-container-low: #191d14;
+  --md-surface-container: #1d2117;
+  --md-surface-container-high: #282b21;
+  --md-surface-container-highest: #32362c;
+  --md-outline: #8c937f;
+  --md-outline-variant: #424938;
+  --md-inverse-surface: #e1e4d5;
+  --md-inverse-on-surface: #2e3227;
+  --md-inverse-primary: #426900;
+  --md-scrim: #000000;
+  --md-shadow: #000000;
 }
 
 /* ---------------------------------------------------------------------------
    Tailwind theme map.
 
-   `inline` is load-bearing: it makes `bg-paper` emit `background-color:
-   var(--paper)` rather than baking today's literal into the utility, so the
-   media query and the `data-theme` override above still reach it. One class
-   name, three themes, no `dark:` prefix anywhere on the page.
+   `inline` is load-bearing: it makes `bg-surface` emit `background-color:
+   var(--md-surface)` rather than baking today's literal into the utility, so
+   the media query and the `data-theme` override above still reach it. One
+   class name, three themes, no `dark:` prefix anywhere on the page.
 
-   `--ok` and `--crit` have no consumer in the current markup; they are
-   registered so the token set stays whole for the next surface.
-   `--shadow` stays a raw custom property, used as `shadow-[var(--shadow)]`.
+   `--color-*: initial` and `--radius-*: initial` drop Tailwind's own palette
+   and radius scale, so `bg-slate-200` and `rounded-lg` resolve to nothing and
+   the only colours and radii available are the ones above — which is how
+   `docs/FRONTEND.md` §3's "a literal hex outside `scheme.json` is a bug" stops
+   being aspirational. Tailwind drops an unresolvable utility silently rather
+   than failing the build, so what this buys is a colour that visibly does not
+   appear, not a compile error. `bg-transparent`, `fill-current` and
+   `rounded-full` are static utilities and are unaffected.
+
+   The radii are `xs/s/m/l/xl`, deliberately not Tailwind's `sm/md/lg`, so the
+   scale reads as M3's and nobody half-remembers the default. `scrim`,
+   `shadow`, the `inverse-*` trio and the `surface-dim` / `surface-bright` pair
+   have no consumer on the three built surfaces; they are registered so the
+   role set stays whole for the next one. `--md-elev-*` stays a raw custom
+   property, used as `shadow-[var(--md-elev-1)]`.
    --------------------------------------------------------------------------- */
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-muted: var(--muted);
-  --color-rule: var(--rule);
-  --color-rule-strong: var(--rule-strong);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
-  --color-brand-green: var(--brand-green);
-  --color-on-green: var(--on-green);
-  --color-ok: var(--ok);
-  --color-warn: var(--warn);
-  --color-crit: var(--crit);
+  --color-*: initial;
+  /* Do not delete or narrow this line, and do not re-add a bare `--radius`.
+     Tailwind ships `rounded-s` and `rounded-l` as *logical / physical side*
+     utilities (start-side and left-side radius) built off a deprecated bare
+     `--radius` DEFAULT, as well as resolving them from the theme keys below.
+     Compiling this file through Tailwind 4.3.3 three ways settles which wins:
+     the theme key does **not** win outright — clearing that DEFAULT here is
+     the only reason `rounded-l` and `rounded-s` mean `var(--md-shape-l)` and
+     `var(--md-shape-s)` at all.
 
-  --font-display: var(--f-display);
-  --font-body: var(--f-body);
+     Re-add a bare `--radius` and every `rounded-l` in the codebase keeps the
+     shape scale on its right two corners and takes that value on its left two,
+     every `rounded-s` likewise on its start two. `rounded-l`'s override
+     arrives as a second rule with the same selector and `rounded-s`'s as extra
+     longhands inside the same rule, so both win by source order rather than
+     specificity and no call site can out-specify them. No error, no failed
+     build, just two wrong corners on the hero chip, the statement card and
+     badge, the amenity board, the sign-in mark wrapper and the role chips.
+
+     The cost of the line, recorded so it is not rediscovered: with it in
+     place, bare `rounded` and the `rounded-t/r/b/e` sides compile to nothing
+     at all. Nothing uses them today. */
+  --radius-*: initial;
+
+  --color-primary: var(--md-primary);
+  --color-on-primary: var(--md-on-primary);
+  --color-primary-container: var(--md-primary-container);
+  --color-on-primary-container: var(--md-on-primary-container);
+  --color-secondary: var(--md-secondary);
+  --color-on-secondary: var(--md-on-secondary);
+  --color-secondary-container: var(--md-secondary-container);
+  --color-on-secondary-container: var(--md-on-secondary-container);
+  --color-tertiary: var(--md-tertiary);
+  --color-on-tertiary: var(--md-on-tertiary);
+  --color-tertiary-container: var(--md-tertiary-container);
+  --color-on-tertiary-container: var(--md-on-tertiary-container);
+  --color-error: var(--md-error);
+  --color-on-error: var(--md-on-error);
+  --color-error-container: var(--md-error-container);
+  --color-on-error-container: var(--md-on-error-container);
+  --color-background: var(--md-background);
+  --color-on-background: var(--md-on-background);
+  --color-surface: var(--md-surface);
+  --color-on-surface: var(--md-on-surface);
+  --color-surface-variant: var(--md-surface-variant);
+  --color-on-surface-variant: var(--md-on-surface-variant);
+  --color-surface-dim: var(--md-surface-dim);
+  --color-surface-bright: var(--md-surface-bright);
+  --color-surface-container-lowest: var(--md-surface-container-lowest);
+  --color-surface-container-low: var(--md-surface-container-low);
+  --color-surface-container: var(--md-surface-container);
+  --color-surface-container-high: var(--md-surface-container-high);
+  --color-surface-container-highest: var(--md-surface-container-highest);
+  --color-outline: var(--md-outline);
+  --color-outline-variant: var(--md-outline-variant);
+  --color-inverse-surface: var(--md-inverse-surface);
+  --color-inverse-on-surface: var(--md-inverse-on-surface);
+  --color-inverse-primary: var(--md-inverse-primary);
+  --color-scrim: var(--md-scrim);
+  --color-shadow: var(--md-shadow);
+
+  --radius-xs: var(--md-shape-xs);
+  --radius-s: var(--md-shape-s);
+  --radius-m: var(--md-shape-m);
+  --radius-l: var(--md-shape-l);
+  --radius-xl: var(--md-shape-xl);
+
+  --font-brand: var(--f-brand);
+  --font-plain: var(--f-plain);
   --font-mono: var(--f-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   M3 type scale — the 15 roles, one utility each. Family, size, line-height,
+   weight and tracking travel together on purpose: a `--text-*` theme entry
+   would leave a caller free to write `text-headline-m` and forget
+   `font-brand`, which is half a type role and always a bug.
+
+   Tracking is declared even where M3 specifies 0, because `body` below sets
+   body-l's 0.5px and an omitted `letter-spacing` would inherit it.
+
+   Source order matters twice, and both are load-bearing:
+     * `num` is declared last, so `num title-l` keeps the mono family. Declared
+       first it would silently lose to the type role's `font-family`.
+     * One type utility cannot override another through `className` — same
+       layer, same specificity, later declaration wins. A component that needs
+       a different role renders the role it wants rather than merging a class.
+   --------------------------------------------------------------------------- */
+
+@utility display-l {
+  font-family: var(--f-brand);
+  font-size: 57px;
+  line-height: 64px;
+  font-weight: 400;
+  letter-spacing: -0.25px;
+}
+
+@utility display-m {
+  font-family: var(--f-brand);
+  font-size: 45px;
+  line-height: 52px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility display-s {
+  font-family: var(--f-brand);
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility headline-l {
+  font-family: var(--f-brand);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility headline-m {
+  font-family: var(--f-brand);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility headline-s {
+  font-family: var(--f-brand);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility title-l {
+  font-family: var(--f-brand);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+@utility title-m {
+  font-family: var(--f-plain);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+}
+
+@utility title-s {
+  font-family: var(--f-plain);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+@utility body-l {
+  font-family: var(--f-plain);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+@utility body-m {
+  font-family: var(--f-plain);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  letter-spacing: 0.25px;
+}
+
+@utility body-s {
+  font-family: var(--f-plain);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+}
+
+@utility label-l {
+  font-family: var(--f-plain);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+@utility label-m {
+  font-family: var(--f-plain);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+@utility label-s {
+  font-family: var(--f-plain);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Composes onto a type role — `num title-l`, `num headline-s`, `num body-m` —
+   and never carries prose. Figures only. */
+@utility num {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   State layers, pointer targets and motion. One definition each, so the class
+   strings in `features/brand/cta.ts` and any real component later share the
+   same mechanics.
+   --------------------------------------------------------------------------- */
+
+/* M3 composites a translucent layer of the ON colour over the container: 8%
+   hover, 10% pressed. On a transparent control that layer is the whole effect,
+   which is why it mixes against `transparent`; a filled button composites its
+   own on-colour over its fill instead and does not use this.
+
+   The order of the `color-mix()` arguments is load-bearing. `color-mix()` is
+   Baseline widely available and needs no gate of ours, but Tailwind emits an
+   `@supports` gate anyway and synthesises the pre-`color-mix` fallback from
+   the *first* colour argument — so the base goes first and the fallback is the
+   resting value. Written the other way round, the fallback is `currentColor`
+   at full strength: on any engine without `color-mix` (Safari < 16.2, Chrome
+   < 111, Firefox < 113) a hover paints the label's own colour as a full-bleed
+   background and the label disappears into it.
+
+   The hover layer is gated on `(hover: hover)` — which is what Tailwind's own
+   `hover:` variant compiles to — because a touch browser applies `:hover` on
+   tap and keeps it until the next tap elsewhere, leaving an 8% tint stuck on
+   the tapped nav link, toggle or table row. `:active` is deliberately left
+   ungated: touch is exactly where it is wanted. */
+@utility m3-state {
+  transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1);
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: color-mix(in srgb, transparent, currentColor 8%);
+    }
+  }
+
+  &:active {
+    background-color: color-mix(in srgb, transparent, currentColor 10%);
+  }
+}
+
+/* M3 draws a button 40px tall and reaches its 48dp touch target with an
+   expanded hit area, not a taller box. This is that expansion: 4px above and
+   below, no change to layout height, so the painted control stays 40px and the
+   pointer target is 48px — clear of this repo's own 44px floor and of WCAG
+   2.5.5 and 2.5.8. Icon buttons are 48x48 outright and do not need it. */
+@utility m3-target {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: -4px;
+    inset-inline: 0;
+  }
+}
+
+/* Shape and width as state — the icon button's press and the segmented
+   button's selection, the two places M3 Expressive spends motion here.
+
+   The easing is Expressive's fast spatial spring (damping 0.6, stiffness 800,
+   mass 1, from AOSP's `ExpressiveMotionTokens.kt`) sampled at 24 even
+   intervals: it overshoots to 1.0948 at 139ms and its envelope is down to
+   3.3e-3 by 350ms, which is why the spring runs 350ms and not the 150ms a
+   non-springing curve wants. The `@supports` gate sits inside because Tailwind
+   requires `@utility` at the top level; outside the gate M3's standard easing
+   runs the same morph without the bounce. Duration and easing are swapped
+   together, through `--m3-morph-duration` and `--m3-morph-spring`: 350ms is
+   the spring's settling time and nothing else, so a browser without `linear()`
+   inheriting it would run a 350ms ease-out press — a slow squish rather than
+   the snap this is meant to be.
+
+   `background-color` is in the property list even though this is a shape
+   utility, and it is load-bearing — do not tidy it out. `m3-state` above
+   declares its 120ms hover transition with the `transition` *shorthand*; this
+   utility declares *longhands* and is emitted later, so on any element
+   carrying both — the theme toggle does — the longhands win outright and a
+   `transition-property` of just `border-radius, width` would leave the state
+   layer snapping on and off untransitioned. Naming it here restores it, at
+   `m3-state`'s own 120ms and M3's standard easing rather than the spring: the
+   duration and easing lists are per-property, so the shape keeps the spring's
+   350ms settling time and the state layer keeps its 120ms. The spring lives in
+   `--m3-morph-spring` so the gate can swap it once for both spatial
+   properties. */
+@utility m3-morph {
+  --m3-morph-duration: 150ms;
+  --m3-morph-spring: cubic-bezier(0.2, 0, 0, 1);
+
+  transition-property: border-radius, width, background-color;
+  transition-duration: var(--m3-morph-duration), var(--m3-morph-duration), 120ms;
+  transition-timing-function:
+    var(--m3-morph-spring), var(--m3-morph-spring), cubic-bezier(0.2, 0, 0, 1);
+
+  @supports (transition-timing-function: linear(0, 1)) {
+    --m3-morph-duration: 350ms;
+    --m3-morph-spring: linear(
+      0,
+      0.0716,
+      0.2381,
+      0.4404,
+      0.6378,
+      0.806,
+      0.9342,
+      1.0211,
+      1.0713,
+      1.0924,
+      1.0931,
+      1.0812,
+      1.0632,
+      1.0438,
+      1.0263,
+      1.0121,
+      1.0018,
+      0.9953,
+      0.992,
+      0.991,
+      0.9916,
+      0.9931,
+      0.9949,
+      0.9967,
+      1
+    );
+  }
+}
+
+/* The 48x48 icon button's resting radius: half the box, so it paints the same
+   circle `rounded-full` does. The literal is here rather than a full round
+   because the spring above passes 1, and a transition interpolates the
+   *specified* radius, not the used one — from `rounded-full`'s 9999px towards
+   `--md-shape-m` the overshoot reaches roughly -935px and clamps to a square
+   corner mid-press. From 24px it lands near 10.9px and reads as the bounce it
+   is meant to be. Pair with `m3-morph` and `active:rounded-m`. */
+@utility m3-morph-round {
+  border-radius: 24px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -128,10 +574,12 @@
 
    `@layer base` is load-bearing. `@import "tailwindcss"` puts every utility in
    `@layer utilities`, and an unlayered declaration beats any layered one
-   whatever its specificity — so unlayered, the `h1, h2, h3` rule below would
-   win over `font-extrabold` and `tracking-[-0.035em]` on the hero <h1> and
-   over every heading utility in the register sections. Inside `base` it does
-   what it is meant to: set the defaults a utility then overrides.
+   whatever its specificity — so unlayered, `body` here would out-specify every
+   type utility above. Inside `base` these do what they are meant to: set the
+   default a utility, or a call site, then overrides. There is deliberately no
+   `h1, h2, h3` type blanket any more — under M3 every heading takes an
+   explicit type role, and a blanket a utility has to out-specify was the
+   subtlest bug in the file this replaces.
 
    Nothing above this block is layered: the token blocks, the `@theme inline`
    map, the mark swap and the reduced-motion blanket have no competing utility.
@@ -139,25 +587,40 @@
 
 @layer base {
   body {
-    font-family: var(--f-body);
-    font-size: 15px;
-    line-height: 1.55;
+    font-family: var(--f-plain);
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.5px;
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Both are progressive enhancements with a usable baseline, and both are
+     overridable from a call site precisely because they are layered — the hero
+     <h1> balances on a hand-placed <br> and turns `balance` off. */
   h1,
   h2,
   h3 {
-    font-family: var(--f-display);
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    line-height: 1.06;
     text-wrap: balance;
   }
 
+  p {
+    text-wrap: pretty;
+  }
+
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 3px solid var(--md-primary);
     outline-offset: 2px;
+  }
+
+  /* `primary` clears 3:1 on every surface tone in both themes but measures
+     1.34 on the brand green, so a control sitting on a `primary-container` or
+     `tertiary-container` fill scopes its ring to the on-colour instead. No
+     element on `/`, `/sign-in` or `/dashboard` does today; this ships because
+     the tokens sheet, the pricing card and the amenity board all will, and
+     rediscovering it then costs more than four lines now. */
+  .focus-on-container:focus-visible,
+  .focus-on-container :focus-visible {
+    outline-color: var(--md-on-primary-container);
   }
 }
 
@@ -202,13 +665,13 @@
 }
 
 /* ---------------------------------------------------------------------------
-   The page's entire motion budget is the CTA's 1px hover lift. This blanket
-   kills the transition; the end-state lift itself is suppressed at the call
-   site, where each CTA pairs `hover:-translate-y-px` with
-   `motion-reduce:hover:translate-y-0`. The artifact's companion
-   `.btn:hover{transform:none}` is deliberately not ported — nothing here
-   carries a `.btn` class, and Tailwind emits `translate`, not `transform`, so
-   it would match nothing and read as a mechanism that is not one.
+   The page's entire motion budget is the state layers' 120ms background-color
+   fade and the shape morph on the icon button and the segmented button. This
+   blanket kills both. Every end state is the correct static one — the radius
+   is back at rest, the selected segment is simply already wide — so nothing
+   needs a `motion-reduce:` companion at the call site. The old CTA's
+   `motion-reduce:hover:translate-y-0` pairs go with the 1px hover lift, which
+   is no longer part of the design.
    --------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

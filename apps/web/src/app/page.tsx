@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     "site developers.",
 };
 
-// The artifact has no landmark structure. <main> is added here (design §7.1): the masthead is
-// the banner above it, the footer the contentinfo below it, and everything between — hero,
-// the five register sections, the closing block — is the main content.
+// The artifact has no landmark structure. <main> is added here: the masthead is the banner
+// above it, the footer the contentinfo below it, and everything between — hero, the five
+// register sections, the closing block — is the main content.
 //
 // Every component below is zero-prop. Hero mounts BrandMark, SiteFooter renders its own
 // <footer>, and each register section owns its `id` so the four in-page CTAs resolve.

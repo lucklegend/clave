@@ -71,8 +71,8 @@ const modules: readonly ModuleRow[] = [
 ];
 
 const thClass =
-  "border-b border-rule-strong py-0 pr-3 pb-2 text-left font-mono text-[10px] font-medium uppercase tracking-[.12em] text-muted";
-const tdClass = "border-b border-rule py-[13px] pr-3 align-top group-hover:bg-surface";
+  "border-b border-outline-variant py-0 pr-4 pb-2 text-left label-m text-on-surface-variant";
+const tdClass = "border-b border-outline-variant py-3.5 pr-4 align-top";
 
 // The artifact's own <h2> reads "Six modules" over these same seven rows. The design (§0.1)
 // resolves the contradiction by correcting the numeral rather than dropping DIR, a real module
@@ -103,7 +103,7 @@ export function ModuleRegister() {
         tabIndex={0}
         className="relative overflow-x-auto"
       >
-        <table className="w-full border-collapse text-[13.5px]">
+        <table className="w-full border-collapse">
           <caption className="sr-only">claveHQ module register</caption>
           <thead>
             <tr>
@@ -123,20 +123,18 @@ export function ModuleRegister() {
           </thead>
           <tbody>
             {modules.map((module) => (
-              <tr key={module.code} className="group">
+              <tr key={module.code} className="m3-state">
                 <td className={`${tdClass} whitespace-nowrap`}>
-                  <span className="font-display text-[15.5px] font-bold tracking-[-0.01em]">
-                    {module.name}
-                  </span>
-                  <span className="mt-0.5 block font-mono text-[10.5px] tracking-[.08em] text-accent">
-                    {module.code}
-                  </span>
+                  <span className="title-m text-on-surface">{module.name}</span>
+                  <span className="mt-0.5 block label-s text-primary">{module.code}</span>
                 </td>
-                <td className={`${tdClass} text-ink-2`}>{module.description}</td>
-                <td className={`${tdClass} whitespace-nowrap font-mono text-[11.5px] text-muted`}>
+                <td className={`${tdClass} body-m text-on-surface-variant`}>
+                  {module.description}
+                </td>
+                <td className={`${tdClass} whitespace-nowrap num body-m text-on-surface-variant`}>
                   {module.writesTo}
                 </td>
-                <td className={`${tdClass} whitespace-nowrap font-mono text-[11.5px] text-muted`}>
+                <td className={`${tdClass} whitespace-nowrap num body-m text-on-surface-variant`}>
                   {module.cadence}
                 </td>
               </tr>

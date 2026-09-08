@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Label } from "@/features/landing/components/Label";
-import { compactGhostCta } from "@/features/brand/cta";
+import { outlinedButton } from "@/features/brand/cta";
 import { signOutAction } from "@/features/auth/actions/sign-out";
 import { createSupabaseServerClient } from "@/features/auth/lib/server";
 
@@ -46,22 +46,17 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-[1180px] px-[22px] pt-11 pb-14">
-      <div className="mb-5 flex max-w-[56ch] items-center gap-2.5">
+      <div className="mb-5 max-w-[56ch]">
         <Label>Signed in</Label>
-        <span className="h-px flex-1 bg-rule-strong" />
       </div>
 
-      <h1 className="text-[clamp(27px,4vw,42px)] font-bold tracking-[-0.035em]">
-        {profile?.full_name ?? user.email}
-      </h1>
-      <p className="mt-4 max-w-[56ch] text-[16.5px] text-ink-2">
+      <h1 className="headline-l text-on-surface">{profile?.full_name ?? user.email}</h1>
+      <p className="body-l mt-4 max-w-[56ch] text-on-surface-variant">
         The portal itself is not built yet. This page confirms the session, the profile row and the
         role grants all resolve — the next milestone drops the real modules in here.
       </p>
 
-      {/* 1px grid lines are the container's own background showing through the gap, as on the
-          landing page's KPI block. */}
-      <dl className="mt-9 grid max-w-[640px] grid-cols-1 gap-px border border-rule bg-rule min-[560px]:grid-cols-2">
+      <dl className="mt-9 grid max-w-[640px] grid-cols-1 gap-4 min-[560px]:grid-cols-2">
         <Fact term="Email" value={profile?.email ?? user.email ?? "—"} />
         <Fact term="Username" value={profile?.username ?? "Not set"} />
         <Fact term="Village" value={profile?.villages?.name ?? "Unassigned"} />
@@ -71,7 +66,7 @@ export default async function DashboardPage() {
       <div className="mt-9 max-w-[640px]">
         <Label className="block">Roles</Label>
         {grants === null || grants.length === 0 ? (
-          <p className="mt-2.5 text-[15px] text-ink-2">
+          <p className="body-l mt-2.5 text-on-surface-variant">
             No roles granted yet. A village administrator assigns these.
           </p>
         ) : (
@@ -79,7 +74,7 @@ export default async function DashboardPage() {
             {grants.map((grant, index) => (
               <li
                 key={`${grant.roles?.key ?? "role"}-${index}`}
-                className="rounded-[2px] border border-rule-strong px-2.5 py-1.5 font-mono text-[11px] tracking-[.06em] uppercase text-ink-2"
+                className="label-l min-h-8 rounded-s border border-outline px-3 py-1.5 break-words text-on-surface-variant"
               >
                 {grant.roles?.name ?? "Unknown role"}
                 {grant.villages?.name !== undefined && ` · ${grant.villages.name}`}
@@ -92,7 +87,7 @@ export default async function DashboardPage() {
       {/* A form and not a link: signing out changes server state, and a GET that mutates is
           followed by every prefetcher and link scanner that touches the page. */}
       <form action={signOutAction} className="mt-11">
-        <button type="submit" className={compactGhostCta}>
+        <button type="submit" className={`${outlinedButton} text-primary`}>
           Sign out
         </button>
       </form>
@@ -102,7 +97,7 @@ export default async function DashboardPage() {
 
 function Fact({ term, value }: { term: string; value: string }) {
   return (
-    <div className="bg-paper px-[13px] py-3">
+    <div className="rounded-m bg-surface-container-low px-4 py-3.5">
       {/* `<dt>` wrapping the label rather than styling a bare span: inside a `<dl>`, a `<div>`
           may contain only `<dt>` and `<dd>`, and `Label` is a `<span>` by definition. */}
       <dt>
@@ -110,7 +105,7 @@ function Fact({ term, value }: { term: string; value: string }) {
       </dt>
       {/* No `nowrap` and no min-width: a long email in a ~320px cell wraps, which is the
           intended degradation. `break-words` stops one from overflowing its cell instead. */}
-      <dd className="mt-[3px] text-[15px] break-words">{value}</dd>
+      <dd className="body-l mt-1 break-words text-on-surface">{value}</dd>
     </div>
   );
 }

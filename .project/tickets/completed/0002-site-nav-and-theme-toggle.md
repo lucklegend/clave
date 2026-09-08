@@ -1,7 +1,7 @@
 # 0002 — Site nav and theme toggle
 
 **Filed:** 2026-09-05
-**Stage:** for_planning
+**Stage:** completed
 
 ## What was asked
 
@@ -107,3 +107,35 @@ mode dies silently without it.
 Real authentication, Supabase, any other route beyond the sign-in stub, and any
 change to the five section bodies. The centre nav links to the sections; it does not
 touch them.
+
+## Delivered — reconciled 2026-09-07
+
+Found closing out a later ticket: this ticket's branch, `feat/0002-site-nav-and-theme-toggle`
+(cut from `main` at `5412d77`), was committed straight to `main` as `a6f9fd6` — "feat: masthead
+nav, theme toggle and a sign-in stub route" — 12 files, 571 insertions, 22 deletions. The board
+was never updated to match: the ticket sat in `in_progress` with its handoff still describing an
+uncommitted branch, when the branch no longer existed as a thing to gate. `9e5dc20` (ticket 0003)
+landed on top of it the same way.
+
+All five planned steps (`S1`–`S5`) shipped as designed — theme module, pre-paint inline script,
+`ThemeToggle`, the masthead rewrite, the `/sign-in` stub — verified in `works.md` via real
+Playwright runs (overflow swept pixel-by-pixel 240–900px with none found, all six OS×choice
+theme combinations correct, 194ms-before-paint under throttle, `localStorage`-disabled fallback
+verified, nine tab stops, zero console errors across ten route×storage runs).
+
+**Gate and review status — recorded, not laundered, same as 0001.** This merged **without the
+stage-6 merge gate**: no `test.md` was ever written and no tests exist for this change (no test
+runner is installed anywhere in the repo). **Only step `S1` had a security review** — mid-loop,
+because the planner flagged it security-sensitive — verdict `CLEARED WITH NOTES`
+(`.agent-work/0002-site-nav-and-theme-toggle/security-review.md`): `SEC-1` (LOW, not fixed) is
+the injected theme script's interpolated storage key having no structural HTML-breakout guard,
+inert today because the key is a compile-time literal but worth revisiting if it ever becomes
+tenant- or env-derived; `SEC-2` (LOW, `[PRE-EXISTING]`) is the site carrying no CSP or security
+headers. Steps S2–S5 and the branch as a whole never had code review.
+
+Findings carried forward, still open, not re-litigated here: the `StatementCard.tsx:62-65` WCAG
+contrast failure (1.47:1 dark) needs its own ticket and does not have one; the masthead measures
+202.4px tall at 320px against the design's predicted 199px; `ThemeToggle.tsx` carries one
+justified `eslint-disable-next-line react-hooks/set-state-in-effect`. Full detail in
+`.agent-work/0002-site-nav-and-theme-toggle/` (`plan.md`, `design.md`, `works.md`,
+`security-review.md`) and in the deleted handoff, superseded by this entry.
