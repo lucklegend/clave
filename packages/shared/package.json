@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./schemas/announcements": "./src/schemas/announcements.ts",
     "./schemas/auth": "./src/schemas/auth.ts",
     "./types/database": "./src/types/database.ts"
   },

@@ -1,0 +1,53 @@
+# Local development services that the Supabase CLI does not start for us.
+#
+# `pnpm supabase start` brings up Postgres, Auth, Storage and the rest of the stack in its
+# own containers; this file is for everything alongside it. Today that is one service.
+#
+#   docker compose up -d     # start the virus scanner
+#   docker compose down      # stop it
+#
+# Nothing here is a production deployment. The scanner is real infrastructure that has to be
+# run and paid for somewhere before uploads work outside a developer's machine — see
+# `apps/web/src/features/announcements/server/scan.ts`, which refuses every upload when no
+# scanner is configured.
+
+services:
+  # ClamAV with an HTTP front end, for the attachment pipeline's virus scan.
+  #
+  # The image bundles `clamd` and the REST wrapper together, so there is one container rather
+  # than two and no socket to share between them. On first start it downloads the signature
+  # database (a few hundred megabytes), which takes a while and is why the healthcheck is
+  # patient — until it passes, the scanner answers nothing and every upload is refused, which
+  # is the correct behaviour rather than a bug to work around.
+  clamav:
+    image: ajilaag/clamav-rest:0.6.6
+    container_name: clavehq-clamav
+    restart: unless-stopped
+    ports:
+      # 9000 is the image's HTTP port. `ANTIVIRUS_SCAN_URL` in apps/web/.env.local points at
+      # the `/scan` endpoint on this port.
+      - "9000:9000"
+    environment:
+      # 26 MB, matching `ATTACHMENT_LIMITS.maxBytesTotal` in
+      # `packages/shared/src/schemas/announcements.ts`. Files are scanned one at a time and
+      # each is capped at 10 MB, so this has headroom by design; a scanner that silently
+      # refused a file for being too large would be refused by the pipeline anyway, since
+      # anything that is not a clear "clean" is a refusal.
+      MAX_FILE_SIZE: "26M"
+      MAX_SCAN_SIZE: "26M"
+    healthcheck:
+      # `/` reports clamd's own statistics, and only answers once the daemon has loaded its
+      # signature database. That makes it the honest readiness signal.
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/"]
+      interval: 30s
+      timeout: 10s
+      # Ten minutes of grace for the first signature download on a cold volume.
+      start_period: 600s
+      retries: 3
+    volumes:
+      # Keeps the signature database across restarts, so the long first download happens once
+      # rather than every morning.
+      - clamav-signatures:/var/lib/clamav
+
+volumes:
+  clamav-signatures:

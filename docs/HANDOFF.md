@@ -25,9 +25,9 @@
 
 ## Current Status
 
-- Phase: **The admin portal shell is live.** `apps/web`, `packages/config`,
-  `packages/shared` and `supabase/` all exist and build. `apps/mobile` is still not
-  built.
+- Phase: **The admin portal shell is live, and the announcement board is built behind
+  it.** `apps/web`, `packages/config`, `packages/shared` and `supabase/` all exist and
+  build. `apps/mobile` is still not built.
 - The local Supabase stack runs (`pnpm supabase start`, Docker required). Three
   migrations create `villages`, `users`, `roles`, `permissions`, `role_permissions`,
   `user_roles`, `user_permissions` with RLS on all seven, the seven system roles, a
@@ -57,30 +57,56 @@
   village ids outright. Table RLS was unaffected — a control request against `users`
   correctly returned `42501` throughout. Fixed for those four and the new
   `user_permission_keys` alike in `20260908130000_user_permission_keys.sql`; full
-  account in `docs/decisions/0002-village-scope-and-authz-seam.md`.
+  account in `docs/decisions/0002-village-scope-and-authz-seam.md`. `user_has_permission`
+  itself went uncalled from TypeScript until this milestone (0010) — `fetchHasPermission`
+  in `apps/web/src/features/authz/server/queries.ts` is now the first caller, used by the
+  announcement save/delete actions for the single-key guard at their mutation boundary,
+  distinct from `fetchPermissionKeys`'s page-wide batch read; see D3 in
+  `docs/decisions/0004-announcements-and-attachment-uploads.md`.
+- **The announcement board is built** (0010, 2026-09-09): `/announcements` (the table,
+  a status filter, a pager), `/announcements/new` and `/announcements/[id]/edit` (the
+  compose form — title, body, attachments, draft/publish-now/schedule), gated on
+  `announcements.create` rather than `announcements.read` because every role holds
+  `read` for the mobile resident feed that does not exist yet. Scheduling is derived
+  from `status = 'published' and publish_at > now()`, computed by the RLS policy and by
+  `apps/web/src/features/announcements/status.ts`, never stored — nothing runs at the
+  scheduled time, so nothing can fail to run. Attachments (PDF, DOCX/XLSX/PPTX, JPEG,
+  PNG, HEIC; 5 files, 10 MB each, 25 MB total) go through the repo's first Storage
+  bucket — private, signed URLs only, magic-byte and OOXML-macro inspection, image
+  re-encode with EXIF stripped, and a ClamAV scan that fails closed when unconfigured.
+  Full account, including two Next.js findings worth carrying into the next feature
+  that uploads anything (a silent request-body truncation, and a `storage.objects`
+  policy that silently bound to the wrong table's `name` column) and the honest list of
+  what is not yet proven, in
+  `docs/decisions/0004-announcements-and-attachment-uploads.md`. **This branch is
+  unreviewed** — no code review, no security review, and the merge gate has not run,
+  so none of this has a test behind it; the works-check (round 2, after round 1 found
+  two capabilities with no caller in the shipped build) is the only verification this
+  has had.
 - Known, deliberate gaps in the portal shell: the **village switcher renders but
   cannot switch** — village scope is server-resolved per-request with no cookie and no
   URL segment, so there is nowhere to write a selection to yet; it needs its own
   ticket. There is **no mobile navigation below the `lg` breakpoint** — the drawer is
-  `hidden lg:flex` and the canvas's modal drawer and bottom bar are unbuilt. **Ten of
-  the eleven nav destinations are `aria-disabled`** — only Today has a page behind it;
-  the other ten are the roadmap, visible so the drawer's own design promise ("a row
-  only appears if you hold the capability that clears it") stays true, disabled
-  because nothing exists to link to yet.
-- Next milestone: the announcement board, unchanged — the first vertical slice
-  through the whole stack now that auth, authorisation and the shell it renders
-  inside of all exist. Ticket 0006 (the payments verification queue) is still filed
-  and is now considerably cheaper to build, since it no longer has to ship its own
-  chrome — the shell it will render inside of already exists.
+  `hidden lg:flex` and the canvas's modal drawer and bottom bar are unbuilt. **Nine of
+  the eleven nav destinations are `aria-disabled`** — Today and Announcements now have
+  pages behind them; the other nine are the roadmap, visible so the drawer's own design
+  promise ("a row only appears if you hold the capability that clears it") stays true,
+  disabled because nothing exists to link to yet.
+- Next milestone: ticket 0006, the payments verification queue — filed and
+  considerably cheaper to build than it would have been before 0007, since it renders
+  inside the shell and inherits the announcement board's Storage/upload posture
+  (private bucket, signed URLs, the same validation seam) rather than inventing its
+  own.
 
 ## Suggested Build Order
 
 1. ~~Scaffold monorepo~~ — done (`apps/web`, `packages/config`, `packages/shared`; `apps/mobile` still pending)
 2. Supabase project + schema/migrations + RLS policies
    - ~~`villages`, `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `user_permissions`~~ — done (0003)
-   - still to build: `units`, `payments`, `announcements`, `amenities`, `bookings`, `reports`
+   - ~~`announcements`, `announcement_attachments`~~ — done (0010)
+   - still to build: `units`, `payments`, `amenities`, `bookings`, `reports`
 3. Auth flow — ~~web: email-or-username + password, Google OAuth~~ done (0003); mobile: phone OTP, pending `apps/mobile`
-4. Announcement board (simplest feature — good first vertical slice through the whole stack)
+4. ~~Announcement board~~ — done (0010), unreviewed
 5. Payment monitoring (upload + admin verification)
 6. Amenity booking system
 7. Incident/reporting system
@@ -164,6 +190,58 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
   drawer stays a Server Component and the viewer's permission set never reaches the browser —
   proved by grepping the built client chunks, not assumed. Designed on the M3 canvas first
   (`Dashboard — Today`). Next: the announcement board, unchanged.
+
+- **2026-09-09** — Ticket 0010: the announcement board, the milestone `docs/HANDOFF.md` has
+  named since 0003. `/announcements` (table, status filter, pager), `/announcements/new` and
+  `/announcements/[id]/edit` (title, body, attachments, draft/publish-now/schedule), gated on
+  `announcements.create` rather than the `announcements.read` the drawer row had been declared
+  with since 0007 — every role holds `read`, because it is the resident feed the mobile app will
+  read from, so gating the admin console on it would have put a compose console in every owner's
+  and tenant's drawer. Scheduling has no `scheduled` enum value and no job: a row is `published`
+  with a `publish_at`, and the RLS select policy and `features/announcements/status.ts` both
+  derive "scheduled" from the same `publish_at > now()` comparison, so nothing can fail silently
+  at the appointed hour and the badge cannot disagree with what a resident's own query already
+  shows them — confirmed live, waiting on the wall clock past a scheduled post's `publish_at`
+  with an already-issued resident session and no reload, no deploy, no job. Attachments (PDF,
+  Word/Excel/PowerPoint, JPEG, PNG, HEIC; 5 files/10 MB each/25 MB total) go through this repo's
+  first Storage bucket and its first `storage.objects` policies — private, signed URLs only,
+  magic-byte and OOXML macro/zip-slip/zip-bomb inspection, image re-encode with EXIF stripped,
+  and a ClamAV scan that fails closed (and ignores its local-only bypass flag outright once
+  `NODE_ENV=production`). HEIC needed both `sharp` and `libheif-js` — they turned out to be
+  **complements**, not one a superset of the other: `sharp`'s libvips decodes AV1-in-HEIF only,
+  `libheif-js` decodes HEVC (what an iPhone actually writes) only, so decode goes through
+  `libheif-js` and encode through `sharp` for every image regardless of source format. Proved
+  against Nokia's `heif_conformance` corpus end to end inside a production build; **not** yet
+  proved against a real iPhone photo — no such file was available in either session that touched
+  this ticket, and that gap is named rather than papered over. The seed grew its first two
+  resident accounts, `alpha_owner` and `bravo_owner` (`clavehq-test-1`, both) — until now the
+  seed held exactly one account, an HOA Admin, so every resident-facing path (what a `read`-only
+  member sees, what a different village sees, the portal's own not-found fallback) was
+  unexercised since ticket 0007 first flagged the gap; `alpha_owner` is the audience test and
+  `bravo_owner`, a second village, is the tenancy test, and both were driven for real over
+  PostgREST with real access tokens rather than assumed from the RLS policy text. **The
+  works-check failed once and passed on a second round**: round 1 found that the delete and
+  attachment-download capabilities were fully built and entirely uncallable — absent from the
+  compiled `server-reference-manifest.json`, not just missing a button — and that any attachment
+  upload whose body crossed roughly 10 MB crashed the compose form instead of showing the
+  pipeline's own refusal message, because Next's proxy-layer body clone (`proxyClientMaxBodySize`,
+  a separate cap from the server action's own `bodySizeLimit`) truncates silently rather than
+  refusing, and a truncated multipart body arrives at the action looking like it is under the
+  action's limit rather than over it. Both were fixed and re-verified independently in round 2.
+  Also found and fixed during the build, not by the works-check: a `storage.objects` policy's
+  bare `name` reference silently bound to `villages.name` rather than `storage.objects.name`
+  inside a subquery that put both tables in scope, refusing every attachment upload and delete
+  while reading, in the source, as though it worked. Full account of all of the above —
+  including what a code and security review still has not looked at, since neither has run on
+  this branch — in `docs/decisions/0004-announcements-and-attachment-uploads.md`. Known,
+  named gaps carried forward rather than fixed here: no download affordance on the board table
+  itself (only on the edit page, by design — see the ADR), `notFound()` still answers HTTP 200
+  because the portal shell has already started streaming, a request body above 56 MB still lands
+  on the generic error boundary rather than a form message, the set-level attachment-cap message
+  can render twice, and there is still no test runner in the repo — `validation/magic-bytes.ts`,
+  `validation/office-zip.ts` and `status.ts` are the strongest candidates yet. Next: ticket 0006,
+  the payments verification queue, which inherits this ticket's Storage/upload posture rather
+  than inventing its own.
 
 ---
 

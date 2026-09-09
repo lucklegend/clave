@@ -360,6 +360,16 @@ create policy announcement_attachments_object_select on storage.objects
 -- Write cannot delegate the same way, because the bytes are uploaded after the row exists
 -- but the row is what the read policy checks — so this one reads the path itself.
 --
+-- `storage.objects.name` is qualified here, and must stay qualified. The subquery puts
+-- `villages` in scope, and `villages` has a `name` column of its own, so a bare `name`
+-- binds to the *village's* name rather than the object's. Postgres resolves that silently
+-- and stores `storage.foldername(v.name)`; a village id compared against a folder segment
+-- of the village's own name never matches, so the policy refuses every upload and every
+-- delete while reading, in the source, as though it should work. It was written
+-- unqualified first and caught only when uploads failed against the running stack. The
+-- SELECT policy above was written qualified and was never affected, which is exactly what
+-- made the inconsistency easy to miss.
+--
 -- The comparison is `villages.id::text = <segment>` and never `<segment>::uuid`. Casting
 -- an arbitrary path segment to uuid raises `22P02` on a malformed one, which turns a
 -- request that should simply be refused into an error; comparing in the other direction
@@ -371,7 +381,7 @@ create policy announcement_attachments_object_insert on storage.objects
     and exists (
       select 1
       from public.villages v
-      where v.id::text = (storage.foldername(name))[1]
+      where v.id::text = (storage.foldername(storage.objects.name))[1]
         and public.user_has_permission('announcements.create', v.id)
     )
   );
@@ -383,7 +393,7 @@ create policy announcement_attachments_object_delete on storage.objects
     and exists (
       select 1
       from public.villages v
-      where v.id::text = (storage.foldername(name))[1]
+      where v.id::text = (storage.foldername(storage.objects.name))[1]
         and (
           public.user_has_permission('announcements.update', v.id)
           or public.user_has_permission('announcements.delete', v.id)

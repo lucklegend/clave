@@ -432,6 +432,13 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      announcement_status_counts: {
+        Args: { p_now?: string; p_village: string };
+        Returns: {
+          status: string;
+          total: number;
+        }[];
+      };
       current_village_ids: { Args: { p_user?: string }; Returns: string[] };
       is_super_admin: { Args: { p_user?: string }; Returns: boolean };
       is_village_admin: {
