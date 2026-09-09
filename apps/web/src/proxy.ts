@@ -135,6 +135,15 @@ export const config = {
   // `/.well-known/` itself a namespace, not a file, so anchoring it to one name would be wrong in
   // the other direction — it has to keep matching whatever the ACME client or the app-link
   // verifier asks for next.
+  //
+  // One consequence of this matcher that does not look like a routing concern at all, recorded
+  // here because it is where the wrong fix for it would be applied: Next **clones and buffers the
+  // request body** of every path a proxy runs on, capped by `experimental.proxyClientMaxBodySize`
+  // in `next.config.ts`. Past that cap the body is truncated rather than refused, and the handler
+  // behind it receives a torn request — which is how a 12 MB attachment reached the announcement
+  // form's action as `Error: Unexpected end of form` instead of the pipeline's "this file is
+  // larger than the limit". An upload that is too large is that number's problem, never an
+  // exclusion added to this list: excluding an upload's path would unguard a page.
   matcher: [
     "/((?!_next/static|_next/image|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|site\\.webmanifest$|apple-app-site-association$|\\.well-known/|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico)$).*)",
   ],

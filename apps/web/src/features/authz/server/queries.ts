@@ -1,12 +1,13 @@
 import "server-only";
 
+import type { PermissionKey } from "@clavehq/shared";
 import type { createSupabaseServerClient } from "@/features/auth/lib/server";
 import { toPermissionSet } from "../permissions";
 import type { PermissionSet, Village } from "../types";
 
 /**
- * The three reads behind `AuthzContext`, and the only place in the portal that talks to the
- * authorisation schema.
+ * The three reads behind `AuthzContext` plus the single-key guard a mutation asks for, and the
+ * only place in the portal that talks to the authorisation schema.
  *
  * Every function here takes the Supabase client as a parameter rather than building one. That is
  * the injection seam for this feature: a caller can see which client a read runs as, and the day
@@ -117,4 +118,41 @@ export async function fetchPermissionKeys(
   // Parsed here, at the boundary the strings arrive on, so no caller downstream can hold an
   // unparsed key and no caller can forget to parse.
   return toPermissionSet(data);
+}
+
+/**
+ * Whether the caller holds one capability in one village — `public.user_has_permission`, and the
+ * first TypeScript caller of it in this repo.
+ *
+ * **This is not `fetchPermissionKeys` with a filter, and the two are not interchangeable.**
+ * `user_permission_keys` enumerates `public.permissions` and answers a whole page's worth of
+ * gates in one round trip, which is what draws the drawer's eleven destinations. This one asks
+ * about a single key and is what `CLAUDE.md` reserves for a single guard at a mutation boundary:
+ * a server action about to write. They also disagree on a key that is not in the catalogue —
+ * this returns `true` for a super admin, the batch returns `false` — so a caller picks the one
+ * that matches the question it is really asking. See
+ * `docs/decisions/0002-village-scope-and-authz-seam.md`.
+ *
+ * `p_user` is deliberately not passed. It defaults to `auth.uid()` in the function, so this can
+ * only ever ask about the caller, exactly as the batch function can.
+ *
+ * `null` on a failed read, like everything else here, and for the same reason: a guard that
+ * cannot tell "you may not" from "the database did not answer" fails open the day the database
+ * is slow. The caller decides what to do with `null`, and at a mutation boundary that is refuse.
+ */
+export async function fetchHasPermission(
+  client: PortalClient,
+  key: PermissionKey,
+  villageId: string,
+): Promise<boolean | null> {
+  const { data, error } = await client.rpc("user_has_permission", {
+    p_permission: key,
+    p_village: villageId,
+  });
+
+  if (error !== null) {
+    return null;
+  }
+
+  return data;
 }

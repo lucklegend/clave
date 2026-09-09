@@ -116,3 +116,96 @@ where u.id = '00000000-0000-4000-a000-00000000ad11'
   and r.key = 'hoa_admin'
   and r.village_id is null
 on conflict do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Resident accounts
+-- ---------------------------------------------------------------------------
+--
+--   username  alpha_owner        email owner@villa-alpha.test   Owner of Villa Alpha
+--   username  bravo_owner        email owner@villa-bravo.test   Owner of Villa Bravo
+--   password  clavehq-test-1     (both)
+--
+-- Added by ticket 0010. Until now this seed had exactly one account, an HOA Admin, which
+-- meant every resident-facing path in the product was unexercised — ticket 0007 recorded
+-- the same gap for the portal's three fallback screens and could not close it.
+--
+-- Two of them, in different villages, because they answer different questions. The Villa
+-- Alpha owner is the audience test: they hold `announcements.read` and not
+-- `announcements.create`, so they must see published posts whose time has passed and must
+-- not see drafts or scheduled ones. The Villa Bravo owner is the tenancy test: they must
+-- see nothing of Villa Alpha at all, whatever they ask for.
+--
+-- Written set-based rather than as two copies of the block above. The bookkeeping GoTrue
+-- needs is documented there and is identical for every account; repeating it three times
+-- is three places to fix when Supabase changes it.
+
+insert into auth.users (
+  instance_id, id, aud, role,
+  email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000',
+  seed.id,
+  'authenticated',
+  'authenticated',
+  seed.email,
+  extensions.crypt('clavehq-test-1', extensions.gen_salt('bf')),
+  now(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  jsonb_build_object('full_name', seed.full_name),
+  '', '', '', '',
+  now(),
+  now()
+from (values
+  ('00000000-0000-4000-a000-00000000a011'::uuid, 'owner@villa-alpha.test', 'Alpha Owner', 'alpha_owner', 'villa-alpha'),
+  ('00000000-0000-4000-a000-00000000b011'::uuid, 'owner@villa-bravo.test', 'Bravo Owner', 'bravo_owner', 'villa-bravo')
+) as seed (id, email, full_name, username, village_slug)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+select
+  seed.id::text,
+  seed.id,
+  jsonb_build_object(
+    'sub', seed.id::text,
+    'email', seed.email,
+    'email_verified', true,
+    'phone_verified', false
+  ),
+  'email',
+  now(),
+  now(),
+  now()
+from (values
+  ('00000000-0000-4000-a000-00000000a011'::uuid, 'owner@villa-alpha.test'),
+  ('00000000-0000-4000-a000-00000000b011'::uuid, 'owner@villa-bravo.test')
+) as seed (id, email)
+on conflict (provider_id, provider) do nothing;
+
+update public.users u
+set village_id = v.id,
+    username = seed.username
+from (values
+  ('00000000-0000-4000-a000-00000000a011'::uuid, 'alpha_owner', 'villa-alpha'),
+  ('00000000-0000-4000-a000-00000000b011'::uuid, 'bravo_owner', 'villa-bravo')
+) as seed (id, username, village_slug)
+join public.villages v on v.slug = seed.village_slug
+where u.id = seed.id;
+
+-- Scoped to their own village, which is the whole point: `owner` holds
+-- `announcements.read` and nothing that lets them post.
+insert into public.user_roles (user_id, role_id, village_id)
+select u.id, r.id, u.village_id
+from public.users u, public.roles r
+where u.id in (
+    '00000000-0000-4000-a000-00000000a011',
+    '00000000-0000-4000-a000-00000000b011'
+  )
+  and r.key = 'owner'
+  and r.village_id is null
+on conflict do nothing;

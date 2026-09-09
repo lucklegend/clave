@@ -1,6 +1,6 @@
 import { ThemeToggle } from "@/features/theme/components/ThemeToggle";
 import { MenuIcon, NotificationsIcon, SearchIcon } from "../icons";
-import { PORTAL_PAGES } from "../nav/destinations";
+import { PORTAL_PAGES, PORTAL_PAGE_PATTERNS } from "../nav/destinations";
 import { AccountButton } from "./AccountButton";
 import { PageHeading } from "./PageHeading";
 import { SidebarToggle } from "./SidebarToggle";
@@ -47,7 +47,7 @@ export function TopAppBar({ accountName }: TopAppBarProps) {
         </SidebarToggle>
       }
     >
-      <PageHeading titles={PORTAL_PAGES} />
+      <PageHeading titles={PORTAL_PAGES} patterns={PORTAL_PAGE_PATTERNS} />
 
       <button type="button" aria-disabled="true" aria-label="Search" className={unbuiltIconButton}>
         <SearchIcon />

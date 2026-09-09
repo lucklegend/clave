@@ -12,6 +12,12 @@ type PageHeadingProps = {
    * module graph does not have to.
    */
   titles: Readonly<Record<string, string>>;
+  /**
+   * `PORTAL_PAGE_PATTERNS`, for routes whose path carries an id. Consulted only when
+   * `titles` has no exact entry, so a literal route can never be shadowed by a pattern
+   * that happens to match it.
+   */
+  patterns: readonly { readonly pattern: string; readonly title: string }[];
 };
 
 /**
@@ -25,12 +31,32 @@ type PageHeadingProps = {
  * The `claveHQ` fallback is reachable in exactly one way — a portal page added without an entry
  * in `PORTAL_PAGES` — and it is meant to be noticed on the screen rather than swallowed.
  */
-export function PageHeading({ titles }: PageHeadingProps) {
+export function PageHeading({ titles, patterns }: PageHeadingProps) {
   const pathname = usePathname();
 
   return (
     <h1 className="title-l min-w-0 flex-1 truncate text-on-surface">
-      {titles[pathname] ?? "claveHQ"}
+      {titles[pathname] ?? matchPattern(patterns, pathname) ?? "claveHQ"}
     </h1>
   );
+}
+
+/**
+ * The first pattern whose expression matches, or `undefined`.
+ *
+ * Compiled per call rather than hoisted to a module-level cache: the table holds one entry,
+ * this runs once per navigation, and a cache keyed on a string is more code than the work it
+ * saves.
+ */
+function matchPattern(
+  patterns: PageHeadingProps["patterns"],
+  pathname: string,
+): string | undefined {
+  for (const entry of patterns) {
+    if (new RegExp(entry.pattern).test(pathname)) {
+      return entry.title;
+    }
+  }
+
+  return undefined;
 }

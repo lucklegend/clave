@@ -18,7 +18,7 @@ import {
  * Every portal page that exists, with the title its app bar carries.
  *
  * Deliberately a different list from {@link NAV_DESTINATIONS} below, and the two are not going
- * to converge: a drawer row can name a module with no page behind it yet (ten of the eleven do
+ * to converge: a drawer row can name a module with no page behind it yet (nine of the eleven do
  * today), and a page can exist with no drawer row (`/settings` is the account page, reached from
  * the app bar's account button — the drawer's "Settings" row is the unbuilt *village* settings
  * module, which is a different screen with a different gate).
@@ -33,7 +33,28 @@ import {
 export const PORTAL_PAGES = {
   "/dashboard": "Today",
   "/settings": "Settings",
+  "/announcements": "Announcements",
+  "/announcements/new": "New announcement",
 } as const;
+
+/**
+ * Titles for portal routes whose path carries an id, which {@link PORTAL_PAGES} cannot name.
+ *
+ * Kept separate rather than folded in, because the two tables do different jobs.
+ * `PORTAL_PAGES` is a record of literal paths and that is what makes `PortalRoute` a union a
+ * `<Link href>` can be typechecked against; a pattern has no literal path to offer, so adding
+ * one there would widen `PortalRoute` to `string` and quietly give up the guarantee the
+ * record exists for.
+ *
+ * Patterns are strings, not `RegExp`, because this table crosses the server/client boundary
+ * to reach `PageHeading` and a `RegExp` does not serialise. The consumer compiles them.
+ *
+ * Ordered: the first match wins, and `PORTAL_PAGES` is consulted first, so an exact route
+ * like `/announcements/new` never reaches a pattern that would also match it.
+ */
+export const PORTAL_PAGE_PATTERNS = [
+  { pattern: "^/announcements/[^/]+/edit$", title: "Edit announcement" },
+] as const satisfies readonly { pattern: string; title: string }[];
 
 export type PortalRoute = keyof typeof PORTAL_PAGES;
 
@@ -83,11 +104,12 @@ export type Destination =
 /**
  * The eleven destinations, in drawer order.
  *
- * **One is built and ten are planned, and that is the two-axis rule working rather than a bug.**
- * Ticket 0007 ships the shell and Today; announcements, residents, units, payments, billing,
- * amenities, bookings and reports have no tables yet, and the last two are their own tickets.
+ * **Two are built and nine are planned, and that is the two-axis rule working rather than a bug.**
+ * Ticket 0007 ships the shell and Today, ticket 0010 ships Announcements; residents, units,
+ * payments, billing, amenities, bookings and reports have no tables yet, and the last two are
+ * their own tickets.
  *
- * The gates are the `read` key of the thing each row leads to, which leaves two that were open
+ * The gates are the `read` key of the thing each row leads to, which leaves three that were open
  * questions when this was planned and are settled here:
  *
  *   * **Today is ungated.** Gating it on `villages.read` would hide the portal's landing page
@@ -97,6 +119,8 @@ export type Destination =
  *     to `super_admin` alone (`20260906120100_seed_roles_and_permissions.sql`), so gating on it
  *     would hide a village's own settings from the village administrator who runs it, while
  *     `users.manage` is the key that migration names as "what makes a village admin".
+ *   * **Announcements gates on `announcements.create`, not `announcements.read`** — see the
+ *     comment on that entry below for why.
  */
 export const NAV_DESTINATIONS = [
   {
@@ -108,11 +132,18 @@ export const NAV_DESTINATIONS = [
     requires: null,
   },
   {
-    kind: "planned",
+    kind: "built",
+    href: "/announcements",
     label: "Announcements",
     section: "community",
     Icon: AnnouncementsIcon,
-    requires: "announcements.read",
+    // Gated on `.create`, not `.read`, and this is the first row where the two diverge.
+    // `announcements.read` is seeded to every role (`20260906120100_seed_roles_and_permissions.sql`)
+    // because it is the resident feed the mobile app will read from — gating this admin console
+    // on it would put "Announcements" in every owner, tenant, maintenance and guard's drawer.
+    // `announcements.create` is held only by super_admin, hoa_admin and officer, which is exactly
+    // who this board is for.
+    requires: "announcements.create",
   },
   {
     kind: "planned",

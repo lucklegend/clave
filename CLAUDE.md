@@ -8,12 +8,16 @@ Subscription SaaS for Philippine HOA / subdivision / condo management — paymen
 monitoring, announcements, amenity booking, incident reporting. A web app for
 admins and officers doing heavy data entry, a mobile app for residents' daily use.
 
-**Built: the landing page, and authentication end to end.** `apps/web`,
-`packages/config`, `packages/shared` and `supabase/` all exist and build. The
-landing page serves at `/`, `/sign-in` is a working form (email-or-username +
-password, Remember me, Google OAuth), and `/dashboard` is a stub behind a session
-guard. `apps/mobile` is still a plan — nothing below describing it is on disk.
-The next milestone is the announcement board; see `docs/HANDOFF.md`.
+**Built: the landing page, authentication end to end, the admin portal shell, and the
+announcement board.** `apps/web`, `packages/config`, `packages/shared` and
+`supabase/` all exist and build. The landing page serves at `/`, `/sign-in` is a
+working form (email-or-username + password, Remember me, Google OAuth), and the
+portal drawer gates `/announcements` (a board, a compose form, drafts, scheduled
+posts, hardened attachment uploads) behind `announcements.create`. `apps/mobile` is
+still a plan — nothing below describing it is on disk. The announcement branch is
+**unreviewed** — no code review, no security review — see `docs/HANDOFF.md` and
+`docs/decisions/0004-announcements-and-attachment-uploads.md`. The next milestone is
+the payments verification queue (ticket 0006).
 
 ## Reach for the docs
 
@@ -73,7 +77,11 @@ branch fires before any existence check), `user_permission_keys` returns `false`
 enumerates `public.permissions`) — so they are not interchangeable; see
 `docs/decisions/0002-village-scope-and-authz-seam.md`. In both, a `deny` beats everything,
 including super admin; a direct `allow` beats the absence of a role grant; super admin
-holds the rest.
+holds the rest. `user_has_permission` itself went uncalled from TypeScript until the
+announcement board (0010) gave it one: `fetchHasPermission` in
+`apps/web/src/features/authz/server/queries.ts` is the single-key guard the two
+announcement server actions ask at their mutation boundary, exactly the case this
+paragraph reserves it for.
 
 The TypeScript seam onto both is `apps/web/src/features/authz/` — pure permission helpers,
 `server/queries.ts` for the Supabase reads (`import "server-only"`), and
@@ -114,6 +122,19 @@ RLS policy in the same migration that creates it.
   `apps/web/src/features/auth/server/resolve-identifier.ts`, behind
   `import "server-only"`. It bypasses RLS entirely. Adding a second reader is a
   decision to widen that blast radius, not a convenience — raise it first.
+- **`announcement-attachments` is the first Storage bucket in the repo**, and it is
+  private (`public = false`) — never make one `public = true`. A file is only ever
+  reached through a short-lived signed URL minted per request
+  (`createSignedUrl(path, 60, { download: fileName })`, which sets
+  `Content-Disposition: attachment` so nothing renders inline in the app's own
+  origin), and Storage's own RLS on `storage.objects` is a second policy surface
+  that a table's RLS does not cover — the object itself needs its own `select`/
+  `insert`/`delete` policies, in the same migration that creates the bucket, on the
+  same rule the pattern in `docs/decisions/0004-announcements-and-attachment-uploads.md`
+  D6/D10 sets: qualify every `name` reference in a `storage.objects` policy as
+  `storage.objects.name`, because a subquery that puts another table with its own
+  `name` column in scope will bind an unqualified one to the wrong column, silently,
+  and refuse every request while reading as correct.
 - A rejected credential returns one message for every cause. Distinguishing "no such
   user" from "wrong password" makes the form an account-enumeration oracle.
 - Source folders group by feature — `features/payments/{components,hooks,api.ts,
@@ -138,6 +159,15 @@ the scripts that actually exist today (full sequence in `docs/LOCAL_SETUP.md`):
 - `pnpm supabase gen types typescript --local > packages/shared/src/types/database.ts`
   — regenerate after **any** migration change. The file is committed so `typecheck`
   works without Docker.
+- `docker compose up -d` / `docker compose down` — at the repo root, alongside the
+  Supabase stack, brings up the ClamAV container (`docker-compose.yml`) the
+  announcement attachment pipeline scans every upload through. Without it, and
+  without `ANTIVIRUS_SCAN_URL` set in `apps/web/.env.local`, every upload is
+  refused — the scanner fails closed by design, see
+  `apps/web/src/features/announcements/server/scan.ts`. `ALLOW_UNSCANNED_UPLOADS=1`
+  in the same file skips the scan for local work only; it is ignored outright once
+  `NODE_ENV=production`. A fresh clone cannot upload an attachment without both
+  variables set.
 
 `pnpm --filter mobile start` does not run yet — `apps/mobile` doesn't exist.
 
