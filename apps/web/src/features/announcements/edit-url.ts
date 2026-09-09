@@ -25,6 +25,20 @@ const EDIT_FAILURES = ["delete", "attachment"] as const satisfies readonly EditF
 const FAILURE_PARAM = "failed";
 
 /** The edit page for `id`, optionally reporting the mutation that just refused. */
+/**
+ * Where an announcement is read.
+ *
+ * Here rather than inline at the call site because `BoardTable` hand-wrote
+ * `` `/announcements/${row.id}/edit` `` while this module sat unused beside it — one route
+ * spelled in two places, which is how the board kept pointing at the editor after viewing
+ * moved. The intercepting route at `@modal/(.)[id]` and the full page at `[id]` answer this
+ * same path; which one a visitor gets depends on whether they arrived by a client navigation
+ * or by opening the URL, and no caller needs to know that.
+ */
+export function announcementHref(id: string): string {
+  return `/announcements/${id}`;
+}
+
 export function editAnnouncementHref(id: string, failure?: EditFailure): string {
   const path = `/announcements/${id}/edit`;
 

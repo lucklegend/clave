@@ -54,6 +54,9 @@ export const PORTAL_PAGES = {
  */
 export const PORTAL_PAGE_PATTERNS = [
   { pattern: "^/announcements/[^/]+/edit$", title: "Edit announcement" },
+  // After the edit pattern, and the order is load-bearing: first match wins, and
+  // `[^/]+` would otherwise swallow `/announcements/<id>/edit` on its way past.
+  { pattern: "^/announcements/[^/]+$", title: "Announcement" },
 ] as const satisfies readonly { pattern: string; title: string }[];
 
 export type PortalRoute = keyof typeof PORTAL_PAGES;

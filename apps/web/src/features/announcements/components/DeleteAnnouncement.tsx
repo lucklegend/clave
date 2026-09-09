@@ -9,9 +9,10 @@ import { deleteAnnouncementAction } from "../actions/delete-announcement";
  * every prefetcher and link scanner that touches the page. Nothing here needs `"use client"`:
  * there is no state, and the disclosure below is HTML's own.
  *
- * **The confirmation is a `<details>` and not a dialog.** This repository has no Dialog, no focus
- * trap and no overlay, and a feature ticket that invents all three has become a component-library
- * ticket. A disclosure is the smallest thing that makes the destructive button a second,
+ * **The confirmation is a `<details>` and not a dialog.** It was written that way because the
+ * repository had neither; ticket 0011 has since built one (`features/portal/components/Modal.tsx`,
+ * `docs/decisions/0005-the-dialog-primitive.md`), so the reason is now the argument rather than
+ * the absence. A disclosure is the smallest thing that makes the destructive button a second,
  * deliberate action rather than a mis-click — it keeps the page's own focus order, it needs no
  * JavaScript, and it costs nothing typed into the form above it, which a confirm-by-navigation
  * would throw away.

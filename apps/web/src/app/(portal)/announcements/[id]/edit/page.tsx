@@ -126,6 +126,25 @@ export default async function EditAnnouncementPage({
               `features/announcements/edit-url.ts`. */}
           <FailureNotice failure={parseEditFailure(query.failed)} />
 
+          {/* Above the form, and that position is the whole of ticket 0011's step 6.
+              Underneath it, the first thing an editor saw was the dropzone — which starts
+              empty, because it holds files being *added* — with the files already on the post
+              drawn below the submit button. Editing a post with three attachments therefore
+              opened on an empty dropzone, which reads as "my files are gone, and saving will
+              finish the job". Nothing was ever lost: `saveAnnouncementAction` appends and has
+              never deleted an existing row. But a layout that makes a correct system look
+              broken costs the same as a broken one until someone checks.
+
+              Drawn only when there is something to draw: a post with no files needs no list
+              saying so. */}
+          {attachments.length > 0 && (
+            <AttachmentList
+              announcementId={announcement.id}
+              attachments={attachments}
+              canRemove={can(permissions, "announcements.update")}
+            />
+          )}
+
           <AnnouncementForm
             announcement={{
               id: announcement.id,
@@ -136,16 +155,6 @@ export default async function EditAnnouncementPage({
             }}
             authorName={authorName}
           />
-
-          {/* Drawn only when there is something to draw: an announcement with no files needs no
-              list saying so, and the form above already carries the dropzone that adds one. */}
-          {attachments.length > 0 && (
-            <AttachmentList
-              announcementId={announcement.id}
-              attachments={attachments}
-              canRemove={can(permissions, "announcements.update")}
-            />
-          )}
 
           {can(permissions, "announcements.delete") && (
             <DeleteAnnouncement announcementId={announcement.id} />

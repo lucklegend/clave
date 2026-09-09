@@ -11,6 +11,8 @@ export {
   ATTACHMENT_TOO_LARGE_MESSAGE,
   ATTACHMENT_TYPES,
   findAttachmentTypeByExtension,
+  findAttachmentTypeByMimeType,
+  isImageFormat,
   SCHEDULE_MUST_BE_FUTURE,
   SCHEDULE_NEEDS_A_TIME,
   TOO_MANY_ATTACHMENTS_MESSAGE,
@@ -20,6 +22,7 @@ export {
   type AttachmentError,
   type AttachmentFormat,
   type AttachmentType,
+  type ImageAttachmentFormat,
   type SaveAnnouncementFailure,
   type SaveAnnouncementResult,
 } from "./schemas/announcements";

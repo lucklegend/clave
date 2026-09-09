@@ -243,6 +243,54 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
   the payments verification queue, which inherits this ticket's Storage/upload posture rather
   than inventing its own.
 
+- **2026-09-09** — Ticket 0011: reading an announcement is now a modal, and the repository has
+  its first dialog. Clicking a board row opens `/announcements/[id]` over the board through a
+  parallel + intercepting route (`@modal/(.)[id]`), with the same view rendered as a full page on
+  a hard load, so an announcement can be linked and the back button closes it. Image attachments
+  preview inline with an overlay download control; documents list with a download control each;
+  "Download all" streams a zip through `fflate`'s `Zip`/`ZipPassThrough`. `/edit` is untouched and
+  is still where editing happens.
+
+  **The dialog is a native `<dialog>` with `showModal()`**, which is what pays the debt three
+  separate comments in the codebase had deferred — it gives focus containment, `Escape`, the top
+  layer and `::backdrop` without this project writing a focus trap. Because the top layer sits
+  above every stacking context, the repo still has **no z-index scale**, which was the other thing
+  a modal usually forces. `docs/decisions/0005-the-dialog-primitive.md` records all of it, and the
+  three now-stale "there is no Dialog" comments were corrected rather than left lying.
+
+  **ADR 0004 D6 was amended, not worked around.** It said no attachment is ever served inline; an
+  image preview is exactly that. The exposure is narrowed instead: only `image/jpeg` and
+  `image/png` may be served inline, decided server-side against the stored row, and every image
+  was re-encoded through `sharp` on upload — so the bytes served are bytes this system wrote, not
+  bytes it received, which makes a polyglot moot rather than merely unlikely. `?inline=1` against
+  a PDF returns 404, driven against the stack rather than reasoned about.
+
+  **No signed URL appears in any page.** Three same-origin routes stand in front of Storage and
+  mint one at click time, so a modal left open past the sixty-second TTL still downloads — tested
+  by actually waiting three minutes — and no credential is written into HTML that could be cached
+  or screenshotted.
+
+  Also fixed, and the reason the ticket was filed in the first place: on `/edit` the files already
+  attached now appear **above** the picker rather than below the submit button. Nothing was ever
+  being deleted — `saveAnnouncementAction` appends and always has — but an empty dropzone at the
+  top of a post with three files reads exactly like "my attachments are gone".
+
+  Two bugs found by testing that would not have been found by reading. Next's `@modal` slot keeps
+  the **same DOM node** across a soft navigation to a sibling route, so the modal stayed open over
+  `/edit` and intercepted every click, while dismissing it navigated back off the page the person
+  had just chosen — every route out was closed. And once that was fixed the form was _still_
+  unclickable, because Tailwind's `flex` in the dialog's class string outranks the UA rule
+  `dialog:not([open]) { display: none }`; a closed dialog sat in the layout swallowing clicks.
+  Both are written up in ADR 0005 D5 and D6.
+
+  Housekeeping: `docker-compose.yml`'s ClamAV healthcheck invoked `curl`, which that image does
+  not ship, so it had failed 587 consecutive times against a scanner that was working perfectly.
+  Now `clamdscan --ping`. An antivirus container that always reads as broken is worse than no
+  healthcheck, because the one time it really is broken nobody looks.
+
+  The branch is **unreviewed** — neither code review nor security review has run — and the merge
+  gate has not run, so it carries no tests. Next: ticket 0006, the payments verification queue.
+
 ---
 
 ## Resume Prompt (paste this into Claude Code / a new chat to continue)

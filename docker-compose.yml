@@ -36,9 +36,15 @@ services:
       MAX_FILE_SIZE: "26M"
       MAX_SCAN_SIZE: "26M"
     healthcheck:
-      # `/` reports clamd's own statistics, and only answers once the daemon has loaded its
-      # signature database. That makes it the honest readiness signal.
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9000/"]
+      # `clamdscan --ping` asks the daemon directly, and the daemon only answers once it has
+      # loaded its signature database — which makes it the honest readiness signal.
+      #
+      # Not `curl` against the HTTP port, which is what this was first written as: **this image
+      # ships no curl and no wget**, so that check could only ever fail. It did, 587 times,
+      # reporting `unhealthy` for a scanner that was working perfectly — and an antivirus
+      # container that always reads as broken is worse than no healthcheck at all, because the
+      # one time it really is broken nobody will look.
+      test: ["CMD", "clamdscan", "--ping", "1"]
       interval: 30s
       timeout: 10s
       # Ten minutes of grace for the first signature download on a cold volume.

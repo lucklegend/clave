@@ -362,3 +362,55 @@ export function findAttachmentTypeByExtension(extension: string): AttachmentType
     return type.extension === normalised || alternates.includes(normalised);
   });
 }
+
+/**
+ * The allowed type a stored MIME type names, or `undefined`.
+ *
+ * The counterpart to {@link findAttachmentTypeByExtension}, and it asks about a different string:
+ * an extension is what an *uploader* typed, while a MIME type here is what the pipeline already
+ * decided and wrote to `announcement_attachments.mime_type` — always the canonical `mimeType` of
+ * an entry above, never the browser's `File.type`. So a stored row always resolves, and anything
+ * that does not resolve is a row this build does not recognise, which is the fail-closed answer
+ * every caller wants.
+ *
+ * Trimmed and lower-cased because MIME types are case-insensitive by definition; parameters
+ * (`image/jpeg; charset=binary`) are deliberately *not* stripped, since no such value is ever
+ * written and inventing tolerance for one would widen what {@link isImageFormat} then vouches for.
+ */
+export function findAttachmentTypeByMimeType(mimeType: string): AttachmentType | undefined {
+  const normalised = mimeType.trim().toLowerCase();
+
+  return ATTACHMENT_TYPES.find((type) => type.mimeType === normalised);
+}
+
+/**
+ * The formats that are images *as stored*, which is a smaller set than the formats that are
+ * images.
+ *
+ * `heic` is absent on purpose and its absence is load-bearing. HEIC is an upload format only:
+ * `apps/web/src/features/announcements/server/transcode.ts` decodes one and re-encodes it as
+ * JPEG, so `image/heic` never reaches the `mime_type` column, and no browser renders it anyway.
+ * A guard that admitted it would vouch for a format nothing can display and nothing can produce.
+ */
+export type ImageAttachmentFormat = Extract<AttachmentFormat, "jpeg" | "png">;
+
+/**
+ * Whether an attachment is an image — the one place that question is answered.
+ *
+ * Two callers, and they must never disagree. The announcement view uses it to decide whether a
+ * file is drawn as a preview or listed as a document, and
+ * `app/(portal)/announcements/[id]/files/[attachmentId]/route.ts` uses it to decide whether a
+ * stored object may be signed for **inline** delivery. That second use is the whole of the
+ * amendment to `docs/decisions/0004-announcements-and-attachment-uploads.md` D6, which otherwise
+ * says no attachment is ever served inline: the exposure is narrowed to exactly the two raster
+ * formats this returns `true` for, and it is narrowed here rather than at the route so that a
+ * component and a security guard cannot drift into two different ideas of "image".
+ *
+ * `isTranscodableFormat` in `server/transcode.ts` looks like this function and is not it: that
+ * one is about which formats the *upload* pipeline re-encodes (it includes `heic`), and it lives
+ * in a module that imports `sharp`, so nothing rendered in a browser can call it. This one is
+ * pure, does no I/O, and imports nothing.
+ */
+export function isImageFormat(format: AttachmentFormat): format is ImageAttachmentFormat {
+  return format === "jpeg" || format === "png";
+}
