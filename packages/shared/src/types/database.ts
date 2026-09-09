@@ -1,13 +1,3 @@
-// GENERATED FILE — do not edit by hand.
-//
-// Regenerate after any change under `supabase/migrations/`:
-//
-//   pnpm supabase gen types typescript --local > packages/shared/src/types/database.ts
-//
-// It is committed rather than generated at build time so that `pnpm typecheck` works on a
-// clean checkout with no Docker running, and so a schema change shows up as a reviewable diff
-// next to the migration that caused it.
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -38,6 +28,118 @@ export type Database = {
   };
   public: {
     Tables: {
+      announcement_attachments: {
+        Row: {
+          announcement_id: string;
+          byte_size: number;
+          checksum_sha256: string;
+          created_at: string;
+          created_by: string | null;
+          file_name: string;
+          id: string;
+          mime_type: string;
+          storage_path: string;
+          village_id: string;
+        };
+        Insert: {
+          announcement_id: string;
+          byte_size: number;
+          checksum_sha256: string;
+          created_at?: string;
+          created_by?: string | null;
+          file_name: string;
+          id?: string;
+          mime_type: string;
+          storage_path: string;
+          village_id: string;
+        };
+        Update: {
+          announcement_id?: string;
+          byte_size?: number;
+          checksum_sha256?: string;
+          created_at?: string;
+          created_by?: string | null;
+          file_name?: string;
+          id?: string;
+          mime_type?: string;
+          storage_path?: string;
+          village_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "announcement_attachments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "announcement_attachments_parent_fkey";
+            columns: ["announcement_id", "village_id"];
+            isOneToOne: false;
+            referencedRelation: "announcements";
+            referencedColumns: ["id", "village_id"];
+          },
+          {
+            foreignKeyName: "announcement_attachments_village_id_fkey";
+            columns: ["village_id"];
+            isOneToOne: false;
+            referencedRelation: "villages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      announcements: {
+        Row: {
+          body: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          publish_at: string | null;
+          status: Database["public"]["Enums"]["announcement_status"];
+          title: string;
+          updated_at: string;
+          village_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          publish_at?: string | null;
+          status?: Database["public"]["Enums"]["announcement_status"];
+          title: string;
+          updated_at?: string;
+          village_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          publish_at?: string | null;
+          status?: Database["public"]["Enums"]["announcement_status"];
+          title?: string;
+          updated_at?: string;
+          village_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "announcements_village_id_fkey";
+            columns: ["village_id"];
+            isOneToOne: false;
+            referencedRelation: "villages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       permissions: {
         Row: {
           action: string;
@@ -343,6 +445,7 @@ export type Database = {
       user_permission_keys: { Args: { p_village?: string }; Returns: string[] };
     };
     Enums: {
+      announcement_status: "draft" | "published" | "archived";
       permission_effect: "allow" | "deny";
       user_status: "invited" | "active" | "suspended";
       village_tier: "free" | "tier_1";
@@ -470,6 +573,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      announcement_status: ["draft", "published", "archived"],
       permission_effect: ["allow", "deny"],
       user_status: ["invited", "active", "suspended"],
       village_tier: ["free", "tier_1"],
