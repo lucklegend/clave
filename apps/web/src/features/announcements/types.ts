@@ -42,17 +42,23 @@ export type AnnouncementAttachment = Pick<
 >;
 
 /**
- * The fields the compose form needs to load an existing announcement for editing, and the files
- * already attached to it.
+ * One whole announcement: what the compose form loads for editing, and what the read-only view
+ * draws, together with the files already attached to it.
  *
  * The attachments ride along rather than being fetched separately: they are read through the
  * parent's own embed in one round trip, and a page that could load an announcement but not its
  * files would be the state the board shipped with — an edit that keeps files it can neither list
  * nor take away.
+ *
+ * `created_at` and `authorName` are here for the view's "posted by / posted on" line and for
+ * nothing else — the edit form has never drawn either. They arrive from the same embed the board
+ * reads (`created_by(full_name, username)`), so the two surfaces name a person the same way; see
+ * `AnnouncementListRow.authorName` above for why `null` is an answer rather than a failure.
  */
 export type AnnouncementRecord = Pick<
   Tables<"announcements">,
-  "id" | "title" | "body" | "status" | "publish_at"
+  "id" | "title" | "body" | "status" | "publish_at" | "created_at"
 > & {
   attachments: readonly AnnouncementAttachment[];
+  authorName: string | null;
 };

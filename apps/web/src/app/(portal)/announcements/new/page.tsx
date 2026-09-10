@@ -13,9 +13,18 @@ export const metadata: Metadata = {
 };
 
 /**
- * Compose an announcement — a full page rather than a dialog, because this repo has no dialog, no
- * focus trap and no date picker, and inventing three of them inside a feature ticket is how a
- * feature ticket becomes a component-library ticket.
+ * Compose an announcement — a full page rather than a dialog.
+ *
+ * When this was written the reason was that the repo had no dialog, no focus trap and no date
+ * picker, and inventing three of them inside a feature ticket is how a feature ticket becomes a
+ * component-library ticket. Half of that is now stale: ticket 0011 built the dialog
+ * (`features/portal/components/Modal.tsx`, `docs/decisions/0005-the-dialog-primitive.md`).
+ *
+ * The conclusion is unchanged, on its own merits rather than for want of a primitive. Composing
+ * is a long, multi-field task with an upload in it and no natural end — the case a dialog is
+ * worst at. The modal exists for *reading* an announcement, which is short and has an obvious
+ * exit. Reaching for it here because it is now available would be the mistake the original
+ * comment was trying to avoid, arrived at from the other direction.
  *
  * A Server Component: it resolves the caller, gates the route and reads the display name, then
  * hands a props' worth of that to `AnnouncementForm`, which is the only `"use client"` leaf here.

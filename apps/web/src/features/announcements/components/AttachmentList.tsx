@@ -52,12 +52,16 @@ const removeSummaryClasses =
   "rounded-full px-3 text-error [&::-webkit-details-marker]:hidden";
 
 export function AttachmentList({ announcementId, attachments, canRemove }: AttachmentListProps) {
+  // A bottom rule rather than a top one: this list sits above the form now, so the divider
+  // belongs between it and what follows rather than above it.
   return (
-    <section className="mt-10 border-t border-outline-variant pt-8">
-      <h3 className="title-m text-on-surface">Files already attached</h3>
+    <section className="mb-8 border-b border-outline-variant pb-8">
+      <h3 className="title-m text-on-surface">Files on this announcement</h3>
       <p className="body-m mt-1 max-w-[62ch] text-on-surface-variant">
-        A download link is signed for this page load and stops working about a minute later.
-        Removing a file also deletes it from storage, and that cannot be undone.
+        These stay attached. Anything you add below is added to them, not in place of them —
+        removing one is the only thing that takes it off, and that also deletes it from storage and
+        cannot be undone. A download link is signed for this page load and stops working about a
+        minute later.
       </p>
 
       <ul className="mt-3 divide-y divide-outline-variant rounded-m border border-outline-variant bg-surface">
@@ -99,8 +103,9 @@ export function AttachmentList({ announcementId, attachments, canRemove }: Attac
                 {/* A form and not a link, for the reason `(portal)/settings/page.tsx` records at
                     its sign-out button: this deletes a file, and a GET that mutates is followed
                     by every prefetcher that touches the page. Opening the disclosure is the
-                    confirmation step — there is no Dialog in this repository and this ticket is
-                    not the one to invent one. */}
+                    confirmation step. A dialog now exists (ticket 0011), and this is still not
+                    the place for one: a disclosure keeps the page's focus order and costs
+                    nothing typed into the form beside it. */}
                 <form action={removeAttachmentAction} className="pt-2">
                   <input type="hidden" name="announcementId" value={announcementId} />
                   <input type="hidden" name="attachmentId" value={attachment.id} />

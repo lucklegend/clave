@@ -109,7 +109,7 @@ claim a different village from its parent even if something upstream of the cons
 wrong — verified directly (`verify-rls.sql`, block 10): attempting exactly that insert raises the
 constraint violation rather than silently mismatching a tenant.
 
-### D6 — Private bucket, short-lived signed URLs, never inline
+### D6 — Private bucket, short-lived signed URLs, inline only for raster images
 
 `storage.buckets` for `announcement-attachments` is inserted with `public = false`, and that is
 never negotiable in this schema — a public bucket serves every object to anyone who can guess or
@@ -127,6 +127,46 @@ re-fetched after its sixty seconds expired with `"exp" claim timestamp check fai
 URL minted with one tenant's real session against another tenant's object returned `404 Object
 not found` — Storage's own RLS on `storage.objects` hides the object from a caller outside its
 village entirely, which is why the refusal reads as "not found" rather than "forbidden".
+
+> **Amended 2026-09-09 by ticket 0011.** The sentence above — "No attachment is ever served
+> inline" — no longer holds, and it is left standing rather than edited away because the
+> reasoning under it is still correct and is what bounds the exception.
+>
+> The announcement view modal shows image attachments as previews, which is inline serving by
+> definition. What makes that acceptable is not a change of mind about the risk; it is that the
+> risk named above cannot reach this path:
+>
+> - **The examples in the original sentence are both excluded by construction.** SVG is not in
+>   `ATTACHMENT_TYPES` and is refused by name, precisely because it is a picture that can run
+>   code. A polyglot PDF cannot be served inline either, because inline serving is restricted to
+>   image MIME types and a PDF is not one.
+> - **The set is two values wide, and closed.** Only `image/jpeg` and `image/png` may be served
+>   inline. `image/heic` is a pipeline _input_, transcoded to JPEG on upload, so it can never
+>   appear in `announcement_attachments.mime_type` — `isImageFormat` in
+>   `packages/shared/src/schemas/announcements.ts` therefore excludes it deliberately.
+> - **The decision is made once, server-side, against the stored row** — never against a
+>   filename, an extension, or anything the caller sent. `?inline=1` on a PDF's id returns 404,
+>   which was driven against the running stack rather than reasoned about.
+> - **Every image was re-encoded through `sharp` on upload** (D9), so the bytes served inline are
+>   bytes this system wrote, not bytes it received. That is a stronger guarantee than the
+>   magic-byte check alone, and it is what makes a polyglot moot rather than merely unlikely.
+>
+> The signer is a **separate function**, `createAttachmentInlineUrl`, and not a `{ inline }` flag
+> on the download one. A boolean parameter is how an inline URL eventually gets minted for a PDF
+> by accident; two functions with two names cannot be passed the wrong argument.
+>
+> One belief stated in the first draft of that ticket was **wrong, and is corrected here**: the
+> inline bytes do _not_ benefit from this app's `X-Content-Type-Options: nosniff`. That header is
+> set by `next.config.ts` on our own responses, and these bytes are served by the Storage origin,
+> which does not send it. What actually does the work is the canonical content type recorded at
+> upload — never the browser's `File.type` — and the fact that the render happens in Supabase's
+> origin rather than the portal's, so even a hostile image is not executing in our security
+> context.
+>
+> **What did not change:** the bucket is still `public = false`, tokens still live sixty seconds,
+> and no signed URL of either kind is written into a page. Ticket 0011 puts a same-origin route in
+> front of Storage that mints one at click time, so a modal left open for an hour still downloads
+> and no credential is ever embedded in HTML that could be cached, screenshotted or pasted.
 
 ### D7 — The upload pipeline's ordering, and why the acceptance test is the refusals
 

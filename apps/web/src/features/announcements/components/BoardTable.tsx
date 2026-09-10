@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AnnouncementListRow } from "../types";
 import type { AnnouncementDisplayStatus } from "../status";
 import { StatusBadge } from "./StatusBadge";
+import { announcementHref } from "../edit-url";
 
 /**
  * The board itself: four columns — Announcement, Posted by, Status, Files — copying
@@ -64,7 +65,7 @@ export function BoardTable({ rows }: BoardTableProps) {
           <tr key={row.id}>
             <td className="px-4 py-3.5">
               <Link
-                href={`/announcements/${row.id}/edit`}
+                href={announcementHref(row.id)}
                 className="body-l block truncate text-on-surface hover:underline"
               >
                 {row.title}

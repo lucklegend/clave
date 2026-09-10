@@ -146,7 +146,7 @@ export async function fetchAnnouncements(
 }
 
 /**
- * One announcement by id, for the edit page.
+ * One announcement by id, for the edit page, the read-only view and the two file routes behind it.
  *
  * Wrapped in `{ row: ... }` rather than returned bare, the same way `fetchHomeVillageId` wraps
  * its answer in `features/authz/server/queries.ts`: `null` here already has a meaning (the read
@@ -165,6 +165,14 @@ export async function fetchAnnouncements(
  *
  * Oldest attachment first, so the list does not reorder itself between two renders of a page
  * whose whole purpose is to point at one row of it.
+ *
+ * `created_at` and the author embed are read here rather than by a second query the view makes on
+ * its own: "posted by X on Y" is one sentence about this row, and a sentence assembled from two
+ * round trips can be assembled from two different states of the database. The embed is the same
+ * one `fetchAnnouncements` uses — `created_by(full_name, username)`, following the foreign key the
+ * migration's guard trigger protects — so the board and the view resolve a name identically, and
+ * both answer `null` for an account that has since been deleted (`created_by` is
+ * `on delete set null`), which is a fact about the row and not a failed read.
  */
 export async function fetchAnnouncementById(
   client: PortalClient,
@@ -175,7 +183,7 @@ export async function fetchAnnouncementById(
     // One literal, however long: `supabase-js` parses this string in the type system to give
     // `data` its shape, and a value assembled by concatenation is a string it cannot read.
     .select(
-      "id, title, body, status, publish_at, announcement_attachments(id, file_name, mime_type, byte_size, storage_path)",
+      "id, title, body, status, publish_at, created_at, created_by(full_name, username), announcement_attachments(id, file_name, mime_type, byte_size, storage_path)",
     )
     .eq("id", id)
     .order("created_at", { referencedTable: "announcement_attachments", ascending: true })
@@ -189,9 +197,15 @@ export async function fetchAnnouncementById(
     return { row: null };
   }
 
-  const { announcement_attachments, ...announcement } = data;
+  const { announcement_attachments, created_by, ...announcement } = data;
 
-  return { row: { ...announcement, attachments: announcement_attachments } };
+  return {
+    row: {
+      ...announcement,
+      attachments: announcement_attachments,
+      authorName: created_by?.full_name ?? created_by?.username ?? null,
+    } satisfies AnnouncementRecord,
+  };
 }
 
 /** How many of `villageId`'s announcements carry each derived status, all four in one row set. */

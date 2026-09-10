@@ -24,12 +24,16 @@ type PortalClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 export const ANNOUNCEMENT_ATTACHMENTS_BUCKET = "announcement-attachments";
 
 /**
- * Sixty seconds on a download link.
+ * Sixty seconds on a signed link, download and inline alike.
  *
  * Long enough for a click to become a saved file, short enough that a URL pasted into a chat is
  * dead before anyone else opens it. A signed URL carries its own authority — it is honoured
  * without a session and without a policy check — so its lifetime is the whole of its access
  * control, and it is minted per request rather than stored anywhere.
+ *
+ * The routes under `app/(portal)/announcements/[id]/` are what make sixty seconds comfortable:
+ * they redirect to a URL minted at the moment of the click, so a modal left open for an hour
+ * still downloads, and no signed URL is ever written into HTML that could be cached or pasted.
  */
 const DOWNLOAD_URL_TTL_SECONDS = 60;
 
@@ -142,6 +146,54 @@ export async function createAttachmentDownloadUrl(
   const { data, error } = await client.storage
     .from(ANNOUNCEMENT_ATTACHMENTS_BUCKET)
     .createSignedUrl(path, DOWNLOAD_URL_TTL_SECONDS, { download: fileName });
+
+  if (error !== null) {
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
+/**
+ * A short-lived URL for **rendering** one attachment in the browser, or `null` if one could not
+ * be minted.
+ *
+ * **This exists for image previews and for nothing else, and calling it is a security decision.**
+ * Omitting `download` is the whole difference from {@link createAttachmentDownloadUrl}: Storage
+ * then answers with `Content-Disposition: inline` and the object's stored content type, so the
+ * browser renders the bytes instead of saving them. A separate function rather than an option on
+ * the existing one, because a `{ download: false }` flag is exactly how a PDF acquires an inline
+ * URL by accident — the call sites that must not do this would still compile.
+ *
+ * `docs/decisions/0004-announcements-and-attachment-uploads.md` D6 said no attachment is ever
+ * served inline, and ticket 0011 amends that rather than working around it. What makes the
+ * narrowed version safe is a chain that was already there:
+ *
+ *   * **Only `image/jpeg` and `image/png` may ever be signed this way.** The caller proves it
+ *     with `isImageFormat` from `@clavehq/shared` — the single source of truth for that question
+ *     — against the stored `mime_type` column, not against anything in the request.
+ *   * **SVG is not on the allowlist**, by name and with the reasoning written beside it, so the
+ *     one image format that is also a script host cannot be in the bucket to be asked for.
+ *   * **The bytes were re-encoded on the way in.** `server/transcode.ts` decodes every image and
+ *     writes a fresh file from the pixels, so a JPEG that was also an HTML document is not one
+ *     any more, and HEIC has already become JPEG.
+ *   * **The content type is the canonical one from the allowlist**, declared by `uploadAttachment`
+ *     and never the browser's `File.type`, so a renderer is told exactly what the bytes are
+ *     rather than left to guess.
+ *
+ * And the URL points at the **Storage origin, not at ours**. A rendered object is in Supabase's
+ * origin with no access to a portal cookie or a portal DOM, whatever it turns out to contain —
+ * which also means the `X-Content-Type-Options: nosniff` that `next.config.ts` puts on our own
+ * responses is not on that one. Checked against the running stack rather than assumed; it is the
+ * canonical content type above, not a header we control, that is doing the work here.
+ */
+export async function createAttachmentInlineUrl(
+  client: PortalClient,
+  path: string,
+): Promise<string | null> {
+  const { data, error } = await client.storage
+    .from(ANNOUNCEMENT_ATTACHMENTS_BUCKET)
+    .createSignedUrl(path, DOWNLOAD_URL_TTL_SECONDS);
 
   if (error !== null) {
     return null;
