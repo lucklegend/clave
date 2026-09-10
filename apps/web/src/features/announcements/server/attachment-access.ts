@@ -9,7 +9,7 @@ import type { AnnouncementRecord } from "../types";
 
 /**
  * The one authorisation path in front of an attachment's bytes, shared by the two route handlers
- * under `app/(portal)/announcements/[id]/`.
+ * under `app/(portal)/announcements/view/[id]/`.
  *
  * It is one function rather than the same twelve lines twice because the two routes must never
  * disagree about who may read a file: the download-and-inline route and the archive route hand a

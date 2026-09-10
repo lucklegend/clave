@@ -11,3 +11,6 @@ dist/
 next-env.d.ts
 .DS_Store
 .agent-work/
+e2e/.auth/
+test-results/
+playwright-report/

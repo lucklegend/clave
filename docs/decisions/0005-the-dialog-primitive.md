@@ -64,9 +64,19 @@ the browser bundle.
 
 ### D4 — The URL is the state, through a parallel + intercepting route
 
-`@modal/(.)[id]` renders the modal over the board on a client navigation; `[id]/page.tsx`
-renders the same view as a full page on a hard load. Both call one component, so the two cannot
-drift.
+`@modal/(.)view/[id]` renders the modal over the board on a client navigation;
+`view/[id]/page.tsx` renders the same view as a full page on a hard load. Both call one
+component, so the two cannot drift.
+
+**Amended 2026-09-10 (ticket 0013).** The id sits behind a literal `view` segment, and that is
+not cosmetic. An interception matches a _segment_, not a shape, so `(.)[id]` directly under
+`/announcements` matched `new` as readily as a uuid — and once the router calls a navigation an
+interception it holds `children` on the page you came from, which is the whole point of
+interception. Clicking "New announcement" therefore moved the URL and left the board on screen,
+with the compose form never rendering. It only happened on a soft navigation to an already
+prefetched link, so it appeared in production and in a long-lived tab while a fresh `next dev`
+tab looked fine — which is why two pull requests shipped it. `e2e/announcements-navigation.spec.ts`
+pins it down against a production build.
 
 This buys three things a client-side boolean could not: the back button closes the modal
 because closing _is_ a navigation; an open announcement can be linked, bookmarked and pasted to

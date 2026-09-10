@@ -13,10 +13,13 @@
     "check:theme": "turbo run check:theme",
     "check:permissions": "turbo run check:permissions",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@clavehq/config": "workspace:*",
+    "@playwright/test": "^1.63.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "prettier": "^3.5.3",

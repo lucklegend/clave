@@ -36,11 +36,11 @@ const FAILURE_PARAM = "failed";
  * or by opening the URL, and no caller needs to know that.
  */
 export function announcementHref(id: string): string {
-  return `/announcements/${id}`;
+  return `/announcements/view/${id}`;
 }
 
 export function editAnnouncementHref(id: string, failure?: EditFailure): string {
-  const path = `/announcements/${id}/edit`;
+  const path = `${announcementHref(id)}/edit`;
 
   return failure === undefined ? path : `${path}?${FAILURE_PARAM}=${failure}`;
 }

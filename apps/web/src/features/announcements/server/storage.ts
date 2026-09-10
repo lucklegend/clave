@@ -31,7 +31,7 @@ export const ANNOUNCEMENT_ATTACHMENTS_BUCKET = "announcement-attachments";
  * without a session and without a policy check — so its lifetime is the whole of its access
  * control, and it is minted per request rather than stored anywhere.
  *
- * The routes under `app/(portal)/announcements/[id]/` are what make sixty seconds comfortable:
+ * The routes under `app/(portal)/announcements/view/[id]/` are what make sixty seconds comfortable:
  * they redirect to a URL minted at the moment of the click, so a modal left open for an hour
  * still downloads, and no signed URL is ever written into HTML that could be cached or pasted.
  */

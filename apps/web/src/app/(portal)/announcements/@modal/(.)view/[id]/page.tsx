@@ -6,13 +6,24 @@ import { loadAuthzContext } from "@/features/authz/server/context";
 import { Modal } from "@/features/portal/components/Modal";
 
 /**
- * Reading an announcement without leaving the board: `/announcements/[id]` intercepted into the
- * `@modal` slot, so the board stays mounted underneath and the dialog opens over it.
+ * Reading an announcement without leaving the board: `/announcements/view/[id]` intercepted into
+ * the `@modal` slot, so the board stays mounted underneath and the dialog opens over it.
  *
- * `(.)` matches the segment at the *same* level as this slot's parent — `announcements/[id]` — and
- * the interception only applies to a soft navigation from inside this layout. A pasted link, a new
- * tab or a reload is a hard load, which Next does not intercept: those get `[id]/page.tsx`, the
- * same view as a full page. One URL, two renderings, and the difference is how you arrived.
+ * `(.)` matches the segment at the *same* level as this slot's parent — `announcements/view/[id]`
+ * — and the interception only applies to a soft navigation from inside this layout. A pasted link,
+ * a new tab or a reload is a hard load, which Next does not intercept: those get
+ * `view/[id]/page.tsx`, the same view as a full page. One URL, two renderings, and the difference
+ * is how you arrived.
+ *
+ * **The `view` segment exists to keep this route away from its siblings, and removing it breaks
+ * the compose page.** An interception matches a *segment*, not a shape: with this file sitting at
+ * `(.)[id]`, directly under `/announcements`, it matched `new` exactly as readily as it matched a
+ * uuid. And once the router calls a navigation an interception it holds `children` on the page you
+ * came from — that is what interception is *for* — so clicking "New announcement" moved the URL
+ * and left the board on screen, with the form never rendering. It reproduced only on a soft
+ * navigation, and only once the link had been prefetched, so it appeared in production and in a
+ * long-lived tab while a fresh dev tab looked fine. `e2e/announcements-navigation.spec.ts` is the
+ * test that pins this down; it fails against a production build if the segment is removed.
  *
  * **This is a route, and it inherits none of the board's checks.** Being drawn over the board is a
  * fact about layout, not about authorisation — a request for this URL is served by this file
@@ -29,7 +40,7 @@ import { Modal } from "@/features/portal/components/Modal";
  */
 export default async function InterceptedAnnouncementPage({
   params,
-}: PageProps<"/announcements/[id]">) {
+}: PageProps<"/announcements/view/[id]">) {
   const result = await loadAuthzContext();
 
   if (result.status === "signed-out") {
@@ -48,13 +59,12 @@ export default async function InterceptedAnnouncementPage({
 
   const { id } = await params;
 
-  // A slot that cannot render this id renders nothing, and never `notFound()`. Deciding the
-  // page is a 404 belongs to `children` — `[id]/page.tsx` makes the same parse and refuses
+  // A slot that cannot render this id renders nothing, and never `notFound()`. Deciding that the
+  // page is a 404 belongs to `children` — `view/[id]/page.tsx` makes the same parse and refuses
   // there — because a refusal raised from *this* subtree takes the whole segment down with it,
-  // including whatever `children` had already rendered correctly beside it. That is exactly the
-  // failure `@modal/new/default.tsx` records, held one level lower here: that file stops the
-  // interceptor claiming one segment spelled `new`, and this stops it rendering a dialog for any
-  // id that was never a uuid.
+  // including whatever `children` had already rendered correctly beside it. Belt and braces next
+  // to the `view` segment above: that is what keeps a non-uuid from reaching this route at all,
+  // and this is what keeps a hand-typed one from turning the page into a 404 from inside a slot.
   if (!z.uuid().safeParse(id).success) {
     return null;
   }

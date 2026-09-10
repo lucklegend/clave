@@ -64,7 +64,7 @@
   distinct from `fetchPermissionKeys`'s page-wide batch read; see D3 in
   `docs/decisions/0004-announcements-and-attachment-uploads.md`.
 - **The announcement board is built** (0010, 2026-09-09): `/announcements` (the table,
-  a status filter, a pager), `/announcements/new` and `/announcements/[id]/edit` (the
+  a status filter, a pager), `/announcements/new` and `/announcements/view/[id]/edit` (the
   compose form — title, body, attachments, draft/publish-now/schedule), gated on
   `announcements.create` rather than `announcements.read` because every role holds
   `read` for the mobile resident feed that does not exist yet. Scheduling is derived
@@ -193,7 +193,7 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
 
 - **2026-09-09** — Ticket 0010: the announcement board, the milestone `docs/HANDOFF.md` has
   named since 0003. `/announcements` (table, status filter, pager), `/announcements/new` and
-  `/announcements/[id]/edit` (title, body, attachments, draft/publish-now/schedule), gated on
+  `/announcements/view/[id]/edit` (title, body, attachments, draft/publish-now/schedule), gated on
   `announcements.create` rather than the `announcements.read` the drawer row had been declared
   with since 0007 — every role holds `read`, because it is the resident feed the mobile app will
   read from, so gating the admin console on it would have put a compose console in every owner's
@@ -243,9 +243,25 @@ _(Add a dated entry each session — 2-3 lines: what changed, what's next, anyth
   the payments verification queue, which inherits this ticket's Storage/upload posture rather
   than inventing its own.
 
+- **2026-09-10** — Ticket 0013: the compose page was unreachable by mouse, and the repository
+  has its first tests. Clicking "New announcement" moved the URL to `/announcements/new` and left
+  the board on screen; the form only appeared on a reload. Cause: `@modal/(.)[id]` sat directly
+  under `/announcements`, and an interception matches a _segment_ rather than a shape, so it
+  claimed `new` as readily as a uuid — after which the router held `children` on the board, which
+  is exactly what interception is for. It reproduced only on a soft navigation to an already
+  prefetched link, so it showed up in production and in a long-lived tab and never in a fresh
+  `next dev` tab. Ticket 0012 had misdiagnosed it: a `default.tsx` in the slot is a fallback
+  consulted only when nothing matches, so it never competed with the interceptor at all.
+  The fix moves the id behind a literal segment — `/announcements/view/[id]`, with `edit`,
+  `files` and `archive` under it — so no sibling of `new` can collide again. Playwright is in
+  (`pnpm e2e`, `e2e/`), building production itself because a dev server cannot see this class of
+  bug: the suite passes against the broken code under `next dev`. Verified by reintroducing the
+  collision and watching the two compose specs fail. Still unreviewed, and there is still no
+  unit-test runner.
+
 - **2026-09-09** — Ticket 0011: reading an announcement is now a modal, and the repository has
-  its first dialog. Clicking a board row opens `/announcements/[id]` over the board through a
-  parallel + intercepting route (`@modal/(.)[id]`), with the same view rendered as a full page on
+  its first dialog. Clicking a board row opens `/announcements/view/[id]` over the board through a
+  parallel + intercepting route (`@modal/(.)view/[id]`), with the same view rendered as a full page on
   a hard load, so an announcement can be linked and the back button closes it. Image attachments
   preview inline with an overlay download control; documents list with a download control each;
   "Download all" streams a zip through `fflate`'s `Zip`/`ZipPassThrough`. `/edit` is untouched and

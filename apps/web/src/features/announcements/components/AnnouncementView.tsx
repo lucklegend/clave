@@ -17,8 +17,8 @@ import { StatusBadge } from "./StatusBadge";
  * An announcement as a reader sees it: title, status, who posted it and when, the words, the
  * files, and the way back to the editor.
  *
- * **One component, two routes.** `@modal/(.)[id]/page.tsx` draws this inside a dialog over the
- * board and `[id]/page.tsx` draws it as a full page; whichever way somebody arrived, they read the
+ * **One component, two routes.** `@modal/(.)view/[id]/page.tsx` draws this inside a dialog over the
+ * board and `view/[id]/page.tsx` draws it as a full page; whichever way somebody arrived, they read the
  * same markup. That only holds because **the read lives here rather than in the routes**: the uuid
  * parse, `fetchAnnouncementById`, `notFound()` for a row RLS will not show, and the notice for a
  * read that failed are all below, so there is no second copy of any of them to drift. What the
@@ -34,7 +34,7 @@ import { StatusBadge } from "./StatusBadge";
  * **No signed URL is rendered here.** A Storage URL lives sixty seconds and a modal can sit open
  * for ten minutes, so every link points at this origin — `…/files/[attachmentId]`, that route with
  * `?inline=1`, and `…/archive` — and the signing happens at click time behind them. See
- * `app/(portal)/announcements/[id]/files/[attachmentId]/route.ts`, which is also where the D6
+ * `app/(portal)/announcements/view/[id]/files/[attachmentId]/route.ts`, which is also where the D6
  * amendment is enforced: this view decides what to *draw* as an image, that route decides what may
  * be *served* as one, and both ask `@clavehq/shared` the same question.
  */

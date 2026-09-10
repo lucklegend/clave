@@ -26,7 +26,7 @@ import {
  */
 export async function GET(
   request: Request,
-  context: RouteContext<"/announcements/[id]/files/[attachmentId]">,
+  context: RouteContext<"/announcements/view/[id]/files/[attachmentId]">,
 ) {
   const { id, attachmentId } = await context.params;
   const attachment = z.uuid().safeParse(attachmentId);

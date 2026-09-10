@@ -26,7 +26,10 @@ import type { createSupabaseServerClient } from "@/features/auth/lib/server";
  * Deflating them again spends CPU per request to save approximately nothing, and it is CPU spent on
  * the server while the person waits.
  */
-export async function GET(_request: Request, context: RouteContext<"/announcements/[id]/archive">) {
+export async function GET(
+  _request: Request,
+  context: RouteContext<"/announcements/view/[id]/archive">,
+) {
   const { id } = await context.params;
   const access = await loadAnnouncementForFiles(id);
 
