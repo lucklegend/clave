@@ -209,3 +209,126 @@ where u.id in (
   and r.key = 'owner'
   and r.village_id is null
 on conflict do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Directory fixture — one account per residents tab
+-- ---------------------------------------------------------------------------
+--
+--   username  alpha_officer   email officer@villa-alpha.test   Officer      → Admin tab
+--   username  alpha_crew      email crew@villa-alpha.test      Maintenance  → Crew tab
+--   username  alpha_guard     email guard@villa-alpha.test     Guard        → Guard tab
+--   username  alpha_tenant    email tenant@villa-alpha.test    Tenant       → Tenant tab
+--   username  alpha_invited   email invited@villa-alpha.test   no role      → All only
+--   password  clavehq-test-1  (all of them)
+--
+-- Added by ticket 0014. Two reasons, and the first is not about filling tabs.
+--
+-- **The officer is the account the whole `security definer` read path exists for.** An
+-- officer holds `users.read` but not `users.manage`, so `user_roles_select` shows them
+-- exactly their own grant and nothing else — under plain RLS the directory's Role column
+-- and every filter tab would be blank for them. Until now this seed had no officer at all,
+-- so that path could not be exercised even in principle, and a change that broke it would
+-- have looked green. `public.residents_list` is what fixes it and this account is what
+-- proves it.
+--
+-- `alpha_invited` carries `status = 'invited'` and deliberately **no role grant**: that is
+-- the state a person sits in between being invited and an admin assigning them a role, so
+-- `role_key` comes back null and the row must still appear under All. A directory that
+-- dropped them would lose people in exactly the window where somebody is looking for them.
+--
+-- Addresses are spread across the five parts on purpose — a condo room with no lot, a
+-- subdivision block/lot with no room — so `formatResidentAddress` is exercised against the
+-- shapes it actually has to survive rather than against one tidy example.
+
+insert into auth.users (
+  instance_id, id, aud, role,
+  email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000',
+  seed.id,
+  'authenticated',
+  'authenticated',
+  seed.email,
+  extensions.crypt('clavehq-test-1', extensions.gen_salt('bf')),
+  now(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  jsonb_build_object('full_name', seed.full_name),
+  '', '', '', '',
+  now(),
+  now()
+from (values
+  ('00000000-0000-4000-a000-00000000a021'::uuid, 'officer@villa-alpha.test', 'Alpha Officer'),
+  ('00000000-0000-4000-a000-00000000a031'::uuid, 'crew@villa-alpha.test',    'Alpha Crew'),
+  ('00000000-0000-4000-a000-00000000a041'::uuid, 'guard@villa-alpha.test',   'Alpha Guard'),
+  ('00000000-0000-4000-a000-00000000a051'::uuid, 'tenant@villa-alpha.test',  'Alpha Tenant'),
+  ('00000000-0000-4000-a000-00000000a061'::uuid, 'invited@villa-alpha.test', 'Alpha Invited')
+) as seed (id, email, full_name)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+)
+select
+  seed.id::text,
+  seed.id,
+  jsonb_build_object(
+    'sub', seed.id::text,
+    'email', seed.email,
+    'email_verified', true,
+    'phone_verified', false
+  ),
+  'email',
+  now(),
+  now(),
+  now()
+from (values
+  ('00000000-0000-4000-a000-00000000a021'::uuid, 'officer@villa-alpha.test'),
+  ('00000000-0000-4000-a000-00000000a031'::uuid, 'crew@villa-alpha.test'),
+  ('00000000-0000-4000-a000-00000000a041'::uuid, 'guard@villa-alpha.test'),
+  ('00000000-0000-4000-a000-00000000a051'::uuid, 'tenant@villa-alpha.test'),
+  ('00000000-0000-4000-a000-00000000a061'::uuid, 'invited@villa-alpha.test')
+) as seed (id, email)
+on conflict (provider_id, provider) do nothing;
+
+update public.users u
+set village_id = v.id,
+    username = seed.username,
+    status = seed.status,
+    phone = seed.phone,
+    address_room = seed.address_room,
+    address_block = seed.address_block,
+    address_lot = seed.address_lot,
+    address_street = seed.address_street,
+    address_phase = seed.address_phase
+from (values
+  ('00000000-0000-4000-a000-00000000a021'::uuid, 'alpha_officer', 'active'::public.user_status,
+   '+639170000021', null, '3', '14', 'Narra Street', '1'),
+  ('00000000-0000-4000-a000-00000000a031'::uuid, 'alpha_crew', 'active'::public.user_status,
+   '+639170000031', null, null, null, 'Service Road', '2'),
+  ('00000000-0000-4000-a000-00000000a041'::uuid, 'alpha_guard', 'active'::public.user_status,
+   '+639170000041', null, null, null, 'Gate 1', null),
+  ('00000000-0000-4000-a000-00000000a051'::uuid, 'alpha_tenant', 'active'::public.user_status,
+   '+639170000051', '12B', null, null, 'Acacia Tower', '2'),
+  ('00000000-0000-4000-a000-00000000a061'::uuid, 'alpha_invited', 'invited'::public.user_status,
+   null, null, '7', '3', 'Molave Street', '3')
+) as seed (id, username, status, phone, address_room, address_block, address_lot, address_street, address_phase)
+join public.villages v on v.slug = 'villa-alpha'
+where u.id = seed.id;
+
+-- Each scoped to Villa Alpha. `alpha_invited` is absent from this list on purpose — see
+-- the note above about the null-role state.
+insert into public.user_roles (user_id, role_id, village_id)
+select seed.id, r.id, u.village_id
+from (values
+  ('00000000-0000-4000-a000-00000000a021'::uuid, 'officer'),
+  ('00000000-0000-4000-a000-00000000a031'::uuid, 'maintenance'),
+  ('00000000-0000-4000-a000-00000000a041'::uuid, 'guard'),
+  ('00000000-0000-4000-a000-00000000a051'::uuid, 'tenant')
+) as seed (id, role_key)
+join public.users u on u.id = seed.id
+join public.roles r on r.key = seed.role_key and r.village_id is null
+on conflict do nothing;

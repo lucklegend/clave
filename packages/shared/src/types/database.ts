@@ -355,6 +355,11 @@ export type Database = {
       };
       users: {
         Row: {
+          address_block: string | null;
+          address_lot: string | null;
+          address_phase: string | null;
+          address_room: string | null;
+          address_street: string | null;
           avatar_url: string | null;
           created_at: string;
           email: string | null;
@@ -367,6 +372,11 @@ export type Database = {
           village_id: string | null;
         };
         Insert: {
+          address_block?: string | null;
+          address_lot?: string | null;
+          address_phase?: string | null;
+          address_room?: string | null;
+          address_street?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           email?: string | null;
@@ -379,6 +389,11 @@ export type Database = {
           village_id?: string | null;
         };
         Update: {
+          address_block?: string | null;
+          address_lot?: string | null;
+          address_phase?: string | null;
+          address_room?: string | null;
+          address_street?: string | null;
           avatar_url?: string | null;
           created_at?: string;
           email?: string | null;
@@ -445,6 +460,79 @@ export type Database = {
         Args: { p_user?: string; p_village: string };
         Returns: boolean;
       };
+      resident_by_id: {
+        Args: { p_resident: string; p_village: string };
+        Returns: {
+          address_block: string;
+          address_lot: string;
+          address_phase: string;
+          address_room: string;
+          address_street: string;
+          avatar_url: string;
+          created_at: string;
+          email: string;
+          full_name: string;
+          id: string;
+          phone: string;
+          role_key: Database["public"]["Enums"]["resident_role"];
+          status: Database["public"]["Enums"]["user_status"];
+          username: string;
+        }[];
+      };
+      residents_in_village: {
+        Args: {
+          p_id?: string;
+          p_role?: Database["public"]["Enums"]["resident_role"];
+          p_village: string;
+        };
+        Returns: {
+          address_block: string;
+          address_lot: string;
+          address_phase: string;
+          address_room: string;
+          address_street: string;
+          avatar_url: string;
+          created_at: string;
+          email: string;
+          full_name: string;
+          id: string;
+          phone: string;
+          role_key: Database["public"]["Enums"]["resident_role"];
+          status: Database["public"]["Enums"]["user_status"];
+          username: string;
+        }[];
+      };
+      residents_list: {
+        Args: {
+          p_limit?: number;
+          p_offset?: number;
+          p_role?: Database["public"]["Enums"]["resident_role"];
+          p_village: string;
+        };
+        Returns: {
+          address_block: string;
+          address_lot: string;
+          address_phase: string;
+          address_room: string;
+          address_street: string;
+          avatar_url: string;
+          created_at: string;
+          email: string;
+          full_name: string;
+          id: string;
+          phone: string;
+          role_key: Database["public"]["Enums"]["resident_role"];
+          status: Database["public"]["Enums"]["user_status"];
+          username: string;
+        }[];
+      };
+      residents_role_counts: {
+        Args: { p_village: string };
+        Returns: {
+          role_key: Database["public"]["Enums"]["resident_role"];
+          total: number;
+        }[];
+      };
       user_has_permission: {
         Args: { p_permission: string; p_user?: string; p_village?: string };
         Returns: boolean;
@@ -454,6 +542,7 @@ export type Database = {
     Enums: {
       announcement_status: "draft" | "published" | "archived";
       permission_effect: "allow" | "deny";
+      resident_role: "admin" | "crew" | "guard" | "owner" | "tenant";
       user_status: "invited" | "active" | "suspended";
       village_tier: "free" | "tier_1";
     };
@@ -582,6 +671,7 @@ export const Constants = {
     Enums: {
       announcement_status: ["draft", "published", "archived"],
       permission_effect: ["allow", "deny"],
+      resident_role: ["admin", "crew", "guard", "owner", "tenant"],
       user_status: ["invited", "active", "suspended"],
       village_tier: ["free", "tier_1"],
     },
