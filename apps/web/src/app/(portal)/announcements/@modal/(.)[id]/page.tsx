@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { z } from "zod";
 import { AnnouncementView } from "@/features/announcements/components/AnnouncementView";
 import { can } from "@/features/authz/permissions";
 import { loadAuthzContext } from "@/features/authz/server/context";
@@ -46,6 +47,17 @@ export default async function InterceptedAnnouncementPage({
   }
 
   const { id } = await params;
+
+  // A slot that cannot render this id renders nothing, and never `notFound()`. Deciding the
+  // page is a 404 belongs to `children` — `[id]/page.tsx` makes the same parse and refuses
+  // there — because a refusal raised from *this* subtree takes the whole segment down with it,
+  // including whatever `children` had already rendered correctly beside it. That is exactly the
+  // failure `@modal/new/default.tsx` records, held one level lower here: that file stops the
+  // interceptor claiming one segment spelled `new`, and this stops it rendering a dialog for any
+  // id that was never a uuid.
+  if (!z.uuid().safeParse(id).success) {
+    return null;
+  }
 
   return (
     // `returnHref` is where dismissal lands if there is no history entry behind the dialog. See
