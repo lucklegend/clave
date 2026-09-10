@@ -46,7 +46,7 @@ export const metadata: Metadata = {
 export default async function EditAnnouncementPage({
   params,
   searchParams,
-}: PageProps<"/announcements/[id]/edit">) {
+}: PageProps<"/announcements/view/[id]/edit">) {
   const result = await loadAuthzContext();
 
   if (result.status === "signed-out") {

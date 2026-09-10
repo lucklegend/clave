@@ -26,7 +26,7 @@ export const metadata: Metadata = {
  * `revalidate`, because the village this page is scoped to comes from the session and not from
  * the URL (ADR 0002 D3).
  */
-export default async function AnnouncementPage({ params }: PageProps<"/announcements/[id]">) {
+export default async function AnnouncementPage({ params }: PageProps<"/announcements/view/[id]">) {
   const result = await loadAuthzContext();
 
   if (result.status === "signed-out") {

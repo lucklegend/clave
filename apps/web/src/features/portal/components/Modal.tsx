@@ -43,7 +43,7 @@ import { iconButton } from "@/features/brand/cta";
  * **Being navigated away from is not dismissal, and telling the two apart is why `usePathname` is
  * here.** A parallel slot keeps its last rendered subtree when the router moves to a sibling
  * segment the slot's own pattern does not match: following the body's "Edit announcement" link to
- * `/announcements/[id]/edit` renders the editor underneath but leaves *this component mounted and
+ * `/announcements/view/[id]/edit` renders the editor underneath but leaves *this component mounted and
  * this dialog open*, because Next has no state for the slot at the new URL and reuses what it had.
  * `default.tsx` does not rescue it — that file answers a *hard* load, where there is no state to
  * reuse. Verified rather than assumed: the dialog node survives the navigation with its DOM

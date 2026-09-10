@@ -1,6 +1,6 @@
 /**
  * What the `@modal` slot renders when nothing has been navigated into it — which is every URL
- * under `/announcements` except the intercepted `/announcements/[id]`.
+ * under `/announcements` except the intercepted `/announcements/view/[id]`.
  *
  * **`default.tsx` is not a fallback page and not a loading state.** A parallel slot keeps its own
  * navigation state, and on a *hard* load Next has no state to recover: it does not know what the

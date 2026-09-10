@@ -171,6 +171,12 @@ the scripts that actually exist today (full sequence in `docs/LOCAL_SETUP.md`):
 
 `pnpm --filter mobile start` does not run yet — `apps/mobile` doesn't exist.
 
-No test runner is installed anywhere in the repo yet, so there is no "run a
-single test" command to give. Once Vitest (or equivalent) is added, replace
-this paragraph with the real invocation.
+- `pnpm e2e` — Playwright, the repo's only test runner (`e2e/`). It **builds and
+  serves production itself** and reuses nothing, because `next dev` does not
+  prefetch a `<Link>` on hover and an intercepting route only renders from the
+  prefetched payload — under a dev server the specs pass against code that is
+  broken for every real user. Needs the Supabase stack up and the seed loaded;
+  it signs in as `admin@villa-alpha.test`. `pnpm e2e:ui` is the watch UI, and
+  `npx playwright test -g "<name>"` runs a single spec.
+
+There is no unit-test runner yet. When one is added, name it here beside this.
